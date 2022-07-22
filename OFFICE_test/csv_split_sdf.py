@@ -10,7 +10,8 @@ i = 0
 df = pd.read_csv("/Users/song-inhyeok/Desktop/admet_data/chembl_data/chembl_start_data.csv")
 
 for chunk in np.array_split(df, len(df) // chunksize):
+    chunk.to_csv(f"/Users/song-inhyeok/Desktop/admet_data/chembl_data/csv_file/chembl_{i}.csv")
     PandasTools.AddMoleculeColumnToFrame(chunk, smilesCol='smiles')
     PandasTools.WriteSDF(chunk, f'/Users/song-inhyeok/Desktop/admet_data/chembl_data/sdf_file/chembl_{i}.sdf', molColName='ROMol', idName='id', properties=None, allNumeric=False)
-    chunk.to_csv(f"/Users/song-inhyeok/Desktop/admet_data/chembl_data/csv_file/chembl_{i}.csv")
+    
     i = i + 1
