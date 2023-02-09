@@ -253,8 +253,7 @@ class glide_proc_test:
                         self.session.commit()
                         
                         save_dir = './media'
-                        client = storage.Client.from_service_account_json('/Users/song-inhyeok/Documents/data/nettargets-chemdb-v1-beb86f192c43.json')
-                        bucket = client.get_bucket('nettargets-discoveryweb-media-bucket')
+                   
                         
                         mol_img = Chem.MolFromSmiles(standard_mol_smi)
                         
@@ -287,8 +286,7 @@ class glide_proc_test:
                     self.session.commit()
 
                     save_dir = './media'
-                    client = storage.Client.from_service_account_json('/Users/song-inhyeok/Documents/data/nettargets-chemdb-v1-beb86f192c43.json')
-                    bucket = client.get_bucket('nettargets-discoveryweb-media-bucket')
+                  
                     
                     mol_img = Chem.MolFromSmiles(standard_mol_smi)
                     
@@ -307,8 +305,7 @@ class glide_proc_test:
         
         time.sleep(10)
         
-        client = storage.Client.from_service_account_json('/Users/song-inhyeok/Documents/data/nettargets-chemdb-v1-beb86f192c43.json')
-        bucket = client.get_bucket('nettargets-discoveryweb-protein-bucket')
+    
         
         file_path = f"./{self.file_name}_prep.maegz"
         bucket_path = "%s/%s" % ('PDB_prep', f"{self.file_name}_prep.maegz")
