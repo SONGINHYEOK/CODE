@@ -1,0 +1,3621 @@
+{% extends "base.html" %}
+{% load static %}
+{% load common_filter %}
+
+{% block content %}
+<!DOCTYPE html>
+<html>
+<script type="text/javascript" src="/static/script/ngl.js"></script>
+<head>
+	<title>Example HTML based on given ratios</title>
+	<style>
+		.container {
+			display: flex;
+			flex-direction: column;
+			height: 98%;
+			width: 100%;
+		}
+		
+		.top {
+			display: flex;
+			flex: 5;
+		}
+		
+		.bottom {
+			display: flex;
+			flex: 5;
+		}
+		
+		.top-left {
+			flex: 7;
+		}
+		
+		.top-right {
+			flex: 3;
+		}
+		
+		.bottom-left {
+            width: 1000px; height:900px;
+			flex: 7;
+            background-color: white;
+            margin-right: 20px;
+            
+		}
+        .table-wrapper {
+            width: 440px; height:900px;
+            overflow: auto;
+            border: 0.1px  
+        }
+
+        .table-wrapper3 {
+            width: 440px; height:900px;
+            overflow: auto;
+            border: 0.1px  
+        }
+		.bottom-right {
+			flex: 3;
+		}
+    
+    /* prevents horizontal scrolling */
+
+  
+    h1 {
+        font-size: 45px;
+        font-weight: 300;
+        margin-top: 10px;
+        margin-bottom: 20px;
+    }
+    
+    h2 {
+        margin-top: 2em;
+    }
+    
+    
+    /*grey background*/
+    .background {
+        fill: #eee;
+    }
+    
+    line {
+        stroke: white; 
+    }
+    
+    text.active {
+        font-weight: bold;
+    }
+    
+    /*position the title of the columns and rows*/
+    #col_title{
+        font-size: 20px;
+        display: block;
+        margin-left:140px;
+        margin-top:2px;
+        font-weight: 300;
+    }
+    
+    #row_title{
+        font-size:20px;
+        display: block;
+        transform:rotate(-90deg );
+        float:left;
+        /*this is sensitive to the length of the 
+        row title*/
+        margin-left: -13px;
+        margin-top: 300px;
+        font-weight: 300;
+    }
+    
+    #svg_div{
+        /*margin-top: 0px;*/
+        /*margin-left: 50px;*/
+        position:absolute;
+        top:0px;
+        left:0px;
+        /*position:fixed;*/
+        /*float:left;*/
+    }
+    
+    #main_svg{
+        /*position:fixed;*/
+        /*top:100px;
+        left:280px;*/
+        /*need to reduce this from -47px
+        not sure why*/
+        margin-left: 0px;
+        font-size:8.0px;
+        display:inline-block;
+    }
+    
+    /*try to get auto height*/
+    #wrapper{
+        width: 95%;
+        height:900px;
+    }
+    
+    #main_container{
+        position: relative;
+        /*!! need to improve this*/
+        width:100%;
+        
+    }
+    
+    #initial_container{
+        position:relative;
+    }
+    
+    #clust_and_row_container{
+        /*so that the child div can be positioned absolutely*/
+        position: relative;
+        height:800px;
+    }
+    
+    /*the viz container is wider
+    than the initial container 
+    because the sidebar will be closed*/
+    #viz_container{
+        position: relative;
+        /*!! this constraints the width of svg*/
+        /*width: 80%;*/
+        /*background-color: blue;*/
+    }
+    
+    #clustergram_container{
+        display: block;
+        border-style: solid;
+        border-width: 3px;
+        border-color: #f5f5f5;
+        margin-top: 10px;
+        /*set height here so that it will 
+        look normal with out clustergram*/
+        /*height: 950px;*/
+        margin-left: 0px;
+    }
+    
+    #clust_instruct_container{
+        display: block;
+        padding-left: 10px;
+        border-left: 0px;
+        /*border-style: solid;*/
+        /*border-width: 5px;*/
+        /*border-color: #f5f5f5;*/
+        /*set up fixed positions*/
+        position:absolute;
+        width:245px;
+    
+    }
+    
+    #website_title{
+        margin-top: 20px;
+        display: none;
+    }
+    
+    #gene_input_box{
+        height:200px;
+        width: 75%;
+        margin: 0 auto;
+        position:relative;
+        display:block;
+        resize:none;
+        font-size: 15px;
+        font-weight: 300;
+        padding-left: 6px;
+    }
+    
+    #title_input_gene_list{
+        width:99%;
+        margin: 0 auto;
+        color:white;
+        text-align: center;
+        margin-top: 32px;
+        margin-bottom: 10px;
+        font-size: 22px;
+        font-weight: 300;
+    }
+    
+    /*title for instructions*/
+    #title_viz_instruct_text{
+        width:99%;
+        margin: 0 auto;
+        color:#333;
+        text-align: left;
+        margin-top: 5px;
+        padding-top:5px;
+        margin-bottom: 5px;
+        font-size: 22px;
+        font-weight: 300;
+        /*clear float left*/
+        clear:both;
+    }
+    
+    /* the instructions for the visualization should
+    look like the input gene list text title*/
+    .viz_instruct_text{
+        width:99%;
+        margin: 0 auto;
+        color:#333;
+        text-align: left;
+        margin-top:10px;
+        margin-bottom: 10px;
+        font-size: 14px;
+        font-weight: 300;
+    }
+    
+    .initial_paragraph{
+        font-size: 20px;
+        width:590px;
+        font-weight: 300;
+        display: none;
+    }
+    
+    
+    #title_gmt_menu{
+        display: none;
+        color:white;
+        padding-top:12px;
+        padding-bottom:12px;
+        padding-left:20px;
+        width:410px;
+        text-align: left; 
+        background: #333333;  
+        font-size: 22px;
+        font-weight: 300;
+    }
+    
+    .h_top{
+        padding-left:20px;
+        width:410px;
+        text-align: left; 
+        background: #8C8C8C;
+        font-size: 17px;
+        font-weight: 300;
+        border-radius: 0;
+        opacity: 0;
+    }
+    
+    .h_medium{
+        padding-left:30px;
+        width:410px;
+        text-align: left; 
+        background: #D0D0D0;
+        border-radius: 0;
+        font-size: 15px;
+        font-weight: 300;
+        padding-top: 0px;
+        padding-bottom: 0px;
+    }
+    
+    #gmt_menu{
+        display: none;
+        margin-top: 20px;
+        margin-left: 0px;
+        font-size: 15px;
+        font-weight: 300;
+    }
+    
+    .buttons{
+        font-size: 15px;
+        font-weight: 300;
+    
+    }
+    
+    .glyph_squares{
+        float: left;
+        margin-right: 10px;
+        margin-top: 0px;
+    }
+    
+    #submit_genes_button{
+        width:141px;
+        margin-bottom: 10px;
+    }
+    
+    /*clear button*/
+    #clear_input_button{
+        opacity: 0.90;
+    }
+    
+    /*return to previous enrichrgram button*/
+    #return_prev_button{
+        width: 140px;
+        margin-top: 40px;
+        opacity: 0.9;
+    }
+    
+    /*modify enrichrgram*/
+    #modify_enrichrgram_button{
+        opacity: 1.0;
+    }
+    
+    .form-group{
+        margin-bottom: 10px;
+    }
+    
+    /*footer - shift it with the sidebar*/
+    #footer_div{
+        margin-left: 0px;
+    }
+    
+    /*title for the visualization*/
+    #viz_website_title{
+        font-size: 33px;
+    }
+    
+    /*container for gene search box*/
+    #gene_search_container{
+        margin-top: 10px;
+        /*needed for some reason*/
+        margin-left: 0px;
+        display: none:;
+    }
+    
+    /*gene search box */
+    #gene_search_box{
+        width:120px;
+        /*float:left;*/
+        /*display: none;*/
+    }
+    
+    /*gene search button*/
+    #gene_search_button{
+        /*width:50px;*/
+        /*float:left;*/
+        margin-top:-2px;
+        /*display: none;*/
+    }
+    
+    /*clear float left*/
+    #clear{
+        clear:both;
+    }
+    
+    /*fizing jquery autocomplete*/
+    .ui-menu-item{
+        float:left;
+        clear: left;
+    }
+    
+    /*move down submit button*/
+    #gene_search_submit{
+        margin-top:5px;
+    }
+    
+    #toggle_order{
+        margin-top: 10px;
+    }
+    
+    .styled {
+        border: 0;
+        line-height: 2.5;
+        padding: 0 20px;
+        font-size: 1rem;
+        text-align: center;
+        color: #fff;
+        text-shadow: 1px 1px 1px #000;
+        border-radius: 10px;
+        background-color: gray;
+        background-image: linear-gradient(to top left, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2) 30%, rgba(0, 0, 0, 0));
+        box-shadow: inset 2px 2px 3px rgba(255, 255, 255, 0.6), inset -2px -2px 3px rgba(0, 0, 0, 0.6);
+    }
+    
+    .styled:hover {
+        background-color: gray;
+    }
+    
+    .styled:active {
+        box-shadow: inset -2px -2px 3px rgba(255, 255, 255, 0.6), inset 2px 2px 3px rgba(0, 0, 0, 0.6);
+    }
+    
+	</style>
+
+<script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+</head>
+<h2 class="page__title">
+    <span>MD_analysis</span>
+</h2>
+<body>
+	<div class="container">
+		<div class="top">
+			<div class="top-left" width="90%">
+				<!-- content of table goes here -->
+                <div id="viewport" style="width:98%; height: 900px;"></div>
+			</div>
+            <div class='table-wrapper' height:921px;>
+                <div class="top-right" style="width:98%;">
+                    <!-- content of summary space goes here -->
+                    <div class="contents--layout-col">
+                        <div class="contents--card" >
+                            <div class="card__head"  >
+                                <strong class="card__title">MD Result</strong>
+                            </div>
+                            <div class="card__body">
+                                <div class="board-table">
+                                    <div class="table__scroll-frame" id="side_right">
+                                        <table style="table-layout: fixed">
+                                            <caption>#, Molecule, Energy, D, S</caption>
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col" style="width:30px;">#</th>
+                                                    <th scope="col" style="width:110px;">Molecule</th>
+                                                    <th scope="col" style="width:110px;">Energy</th>
+                                                    <th scope="col">D</th>
+                                                    <th scope="col">S</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="md_rsbody">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+		<div class="bottom">
+            <div class="bottom-left" width="70%">
+                <!-- content of table goes here -->
+                <div id="wrapper" class='toggled' width="100%">
+                    <div>
+                        <select id="interaction" name="interaction">
+                            <option value="All" selected="selected">All</option>
+                            <option value="HBond">HBond</option>
+                            <option value="Hydrophobic" >Hydrophobic</option>
+                            <option value="Ionic">Ionic</option>
+                            <option value="WaterBridge">WaterBridge</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Page Content -->
+                    <div id="page-content-wrapper" width="100%" height="800 px">
+                    <!-- Initial Content --> 
+                    <div id='main_container' width="100%" height="800 px">
+                        <!-- this row is required, -fluid causes problems --> 
+                        <div class="row" > 
+                        <div class="col-lg-12">
+                            <!-- visualization -->
+                            <div id='viz_container'>
+                                <div class='row'>
+                                    </div>
+                    
+                                    <div id='clustergram_container' width="100%">
+                                    
+                                    <div id='clust_and_row_container'>
+                                        
+                                        <div id='svg_div'></div>
+                                    </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- end visualization -->
+                
+                        </div>
+                        </div> <!-- end row -->
+                    </div>
+                
+                    <!-- /#page-content-wrapper -->
+                </div>
+            </div>
+            <div class='table-wrapper3'>
+                <div class="bottom-right" width="98%">
+                    <!-- content of summary space goes here -->
+                    <div class="contents--layout-col" width="98%">
+                        <div class="contents--card">
+                            <div class="card__head">
+                                <strong class="card__title">Residue list</strong>
+                            </div>
+                         <div class="card__body">
+                                <div class="board-table">
+                                    <div class="table__scroll-frame" id="side_right" style="overflow-y: auto;">
+                                        <table style="table-layout: fixed">
+                                            <caption>Residue, S</caption>
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col" style="width:85%">Residue</th>
+                                                    <th scope="col" style="width:15%">S</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="res_tody">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+		</div>
+	</div>
+</body>
+</html>
+<script>
+    var global_col_name;
+    $(document).ready(function(){
+        var first_radio=$("#radio_1")
+        first_radio.prop('checked', 'checked')
+        protein_view();
+    });
+    
+
+    var tr_source = "{{md_result|escapejs}}"
+    var tr_info = JSON.parse(tr_source)
+
+
+    let element = ``;
+        for(let i = 0; i < tr_info.length; i++) {
+            element += `<tr data-id=md_` + i + `>`;
+            element += `   <td>` + (i+1) + `</td>`;
+            
+            element += `   <td>`;
+            element += `        <div class="molecule-list__molecule-image">`
+            element += `            <img src=`+tr_info[i]['image']+ ` alt="" width="100%">`
+            element += `        </div>`
+            element += `   </td>`;
+            element += `   <td>` + tr_info[i]['score'] + `</td>`;
+            element += `   <td>`;
+            //element += `       <label for="{{forloop.counter}}" class="choicebox">`;
+            element += `          <input type="radio"  name="display" value=`+ tr_info[i]['name']+" id=radio_"+(i+1)+` onclick="protein_view()" >`;
+            //element += `          <i class="choicebox-icon"></i>`;
+            //element += `       </label>`;
+            element += `   </td>`;
+            element += `   <td>`;
+            //element += `       <label for="{{forloop.counter}}" class="choicebox">`;
+            element += `          <input type="checkbox" name="result_display" value=` + (i+1) + ` onclick="Redraw_data()" checked>`;
+            //element += `           <i class="choicebox-icon"></i>`;
+            //element += `       </label>`;
+            element += `   </td>`;
+            element += `</tr>`;
+        }
+        $('#md_rsbody').append(element);
+    
+
+    var anal_source= "{{analysis_info|escapejs}}"
+    var analinfo_data = JSON.parse(anal_source)
+    console.log(analinfo_data)
+
+    var res_source= "{{total_res|escapejs}}"
+    var res_data = JSON.parse(res_source)
+
+    let element3 = ``;
+        for(let i = 0; i < res_data.length; i++) {
+            element3 += `<tr data-id=res_` + i + `>`;
+            element3 += `   <td>` + res_data[i] + `</td>`;
+            element3 += `   <td>`;
+            //element3 += `       <label for="{{forloop.counter}}" class="choicebox">`;
+            element3 += `       <div>`;    
+            element3 += `          <input type="checkbox" id="residuebox" name="residue_display" value=`+res_data[i]+" class="+res_data[i]+` onclick="Redraw_data()" checked >`;
+            element3 += `       </div>`;    
+            //element3 += `          <i class="choicebox-icon"></i>`;
+            //element3 += `       </label>`;
+            element3 += `   </td>`;
+            element3 += `</tr>`;
+        }
+        $('#res_tody').append(element3);
+    
+
+
+    var hb_source= "{{Hbond|escapejs}}"
+    var hb_data = JSON.parse(hb_source)
+    
+
+    var hy_source= "{{Hydro|escapejs}}"
+    var hy_data = JSON.parse(hy_source)
+    
+
+    var Ion_source= "{{Ion|escapejs}}"
+    var in_data = JSON.parse(Ion_source)
+    
+
+    var wa_source= "{{WB|escapejs}}"
+    var wa_data = JSON.parse(wa_source)
+
+    var res_source= "{{res_dis|escapejs}}"
+    var res_data = JSON.parse(res_source)
+    console.log(res_data)
+
+    var HB_col_source = "{{HB_col|escapejs}}"
+    var HB_col = JSON.parse(HB_col_source)
+    
+    var HY_col_source = "{{HY_col|escapejs}}"
+    var HY_col = JSON.parse(HY_col_source)
+    
+    var IN_col_source = "{{IN_col|escapejs}}"
+    var IN_col = JSON.parse(IN_col_source)
+    
+    var WA_col_source = "{{WA_col|escapejs}}"
+    var WA_col = JSON.parse(WA_col_source)
+    
+
+
+    let element4 = ``;
+        for(let i = 0; i < HB_col.length; i++) {
+            element4 += `<tr data-id=res_` + i + `>`;
+            element4 += `   <td>` + HB_col[i] + `</td>`;
+            element4 += `   <td>`;
+            //element3 += `       <label for="{{forloop.counter}}" class="choicebox">`;
+            element4 += `       <div>`;    
+            element4 += `          <input type="checkbox" id="residuebox" name="residue_display" value=`+HB_col[i]+" class="+HB_col[i]+` onclick="Redraw_data()" checked >`;
+            element4 += `       </div>`;    
+            //element3 += `          <i class="choicebox-icon"></i>`;
+            //element3 += `       </label>`;
+            element4 += `   </td>`;
+            element4 += `</tr>`;
+        }
+    let element5 = ``;
+        for(let i = 0; i < HY_col.length; i++) {
+            element5 += `<tr data-id=res_` + i + `>`;
+            element5 += `   <td>` + HY_col[i] + `</td>`;
+            element5 += `   <td>`;
+            //element3 += `       <label for="{{forloop.counter}}" class="choicebox">`;
+            element5 += `       <div>`;    
+            element5 += `          <input type="checkbox" id="residuebox" name="residue_display" value=`+HY_col[i]+" class="+HY_col[i]+` onclick="Redraw_data()" checked >`;
+            element5 += `       </div>`;    
+            //element3 += `          <i class="choicebox-icon"></i>`;
+            //element3 += `       </label>`;
+            element5 += `   </td>`;
+            element5 += `</tr>`;
+        }
+    let element6 = ``;
+        for(let i = 0; i < IN_col.length; i++) {
+            element6 += `<tr data-id=res_` + i + `>`;
+            element6 += `   <td>` + IN_col[i] + `</td>`;
+            element6 += `   <td>`;
+            //element3 += `       <label for="{{forloop.counter}}" class="choicebox">`;
+            element6 += `       <div>`;    
+            element6 += `          <input type="checkbox" id="residuebox" name="residue_display" value=`+IN_col[i]+" class="+IN_col[i]+` onclick="Redraw_data()" checked >`;
+            element6 += `       </div>`;    
+            //element3 += `          <i class="choicebox-icon"></i>`;
+            //element3 += `       </label>`;
+            element6 += `   </td>`;
+            element6 += `</tr>`;
+        }
+    let element7 = ``;
+        for(let i = 0; i < WA_col.length; i++) {
+            element7 += `<tr data-id=res_` + i + `>`;
+            element7 += `   <td>` + WA_col[i] + `</td>`;
+            element7 += `   <td>`;
+            //element3 += `       <label for="{{forloop.counter}}" class="choicebox">`;
+            element7 += `       <div>`;    
+            element7 += `          <input type="checkbox" id="residuebox" name="residue_display" value=`+WA_col[i]+" class="+WA_col[i]+` onclick="Redraw_data()" checked >`;
+            element7 += `       </div>`;    
+            //element3 += `          <i class="choicebox-icon"></i>`;
+            //element3 += `       </label>`;
+            element7 += `   </td>`;
+            element7 += `</tr>`;
+        }
+    $(document).ready(function(){
+        $("#interaction").change(function(){
+          // Value값 가져오기
+          var val = $("#interaction :selected").val();
+          // Text값 가져오기
+          var text = $("#interaction :selected").text();
+          // Index가져오기
+          var index = $("#interaction :selected").index();
+          console.log(val)
+          $("#value").val(val);
+          $("#text").val(text);
+
+          if (val == "HBond"){
+            $('#res_tody').empty()
+            var network_data = hb_data
+            // make global copy of network_data 
+            global_network_data = network_data;
+        
+            make_d3_clustergram(network_data);
+            $('#res_tody').append(element4);
+          } else if (val == "Hydrophobic"){
+            $('#res_tody').empty()
+            var network_data = hy_data
+            // make global copy of network_data 
+            global_network_data = network_data;
+        
+            make_d3_clustergram(network_data);
+            $('#res_tody').append(element5);
+          } else if (val == "Ionic"){
+            $('#res_tody').empty()
+            var network_data = in_data
+            // make global copy of network_data 
+            global_network_data = network_data;
+        
+            make_d3_clustergram(network_data);
+            $('#res_tody').append(element6);
+          } else if (val == "WaterBridge"){
+            $('#res_tody').empty()
+            var network_data = wa_data
+            // make global copy of network_data 
+            global_network_data = network_data;
+        
+            make_d3_clustergram(network_data);
+            $('#res_tody').append(element7);
+          } else {
+            $('#res_tody').empty()
+            var network_data = analinfo_data
+            // make global copy of network_data 
+            global_network_data = network_data;
+            make_d3_clustergram(network_data);
+            $('#res_tody').append(element3);
+          }
+        });
+      });
+
+    function Redraw_data(){
+        var url = location.href
+        
+        var dictvalue = {};    
+        dictvalue['batch'] = url.split("?")[1].split("&")[2].split("=")[1]
+        var checkbox_1  = document.getElementsByName('result_display');
+        var checkbox_2  = document.getElementsByName('residue_display');
+
+        job_list = []
+        for (var i=0; i<checkbox_1.length; i++){
+            //console.log(document.getElementsByName('result_display')[i])
+            if (document.getElementsByName('result_display')[i].checked == true){
+                job_list.push(document.getElementsByName('result_display')[i].value)
+                dictvalue['job'] = job_list
+                
+            }
+        }   
+        col_list = []
+        for (var j=0; j<checkbox_2.length; j++){
+            if (document.getElementsByName('residue_display')[j].checked == true){
+                col_list.push(document.getElementsByName('residue_display')[j].value)
+                dictvalue['col'] = col_list
+                
+            }
+        }
+        var val = $("#interaction :selected").val()
+        console.log(val)
+        if (val=="All"){
+            $.ajax({
+                url:"{% url 'project:MD_redraw' %}",
+                data: dictvalue,
+                dataType: 'json',
+                type: 'post',
+                success:function(data) {     
+                    var network_data = data
+                    // make global copy of network_data 
+                    global_network_data = network_data;
+                
+                    make_d3_clustergram(network_data);
+                }
+            });
+        } else if (val == "HBond"){
+            $.ajax({
+                url:"{% url 'project:MD_redraw_HB' %}",
+                data: dictvalue,
+                dataType: 'json',
+                type: 'post',
+                success:function(data) {     
+                    var network_data = data
+                    // make global copy of network_data 
+                    global_network_data = network_data;
+                
+                    make_d3_clustergram(network_data);
+                   
+                    
+                }
+            });
+        }  else if (val == "Hydrophobic"){
+            $.ajax({
+                url:"{% url 'project:MD_redraw_HY' %}",
+                data: dictvalue,
+                dataType: 'json',
+                type: 'post',
+                success:function(data) {     
+                    var network_data = data
+                    // make global copy of network_data 
+                    global_network_data = network_data;
+                
+                    make_d3_clustergram(network_data);
+                   
+                }
+            });
+        } else if (val == "Ionic"){
+            $.ajax({
+                url:"{% url 'project:MD_redraw_IN' %}",
+                data: dictvalue,
+                dataType: 'json',
+                type: 'post',
+                success:function(data) {     
+                    var network_data = data
+                    // make global copy of network_data 
+                    global_network_data = network_data;
+                
+                    make_d3_clustergram(network_data);
+                  
+                }
+            });
+        } else {
+            $.ajax({
+                url:"{% url 'project:MD_redraw_WA' %}",
+                data: dictvalue,
+                dataType: 'json',
+                type: 'post',
+                success:function(data) {     
+                    var network_data = data
+                    // make global copy of network_data 
+                    global_network_data = network_data;
+                
+                    make_d3_clustergram(network_data);
+                   
+                }
+            });
+        }
+        
+    
+    };
+    function protein_view(){
+
+        function addElement (el) {
+            Object.assign(el.style, {
+              position: "absolute",
+              zIndex: 20
+            })
+            stage.viewer.container.appendChild(el)
+          }
+          
+        var topPosition = 220
+    
+        function getTopPosition (increment) {
+        if (increment) topPosition += increment
+        return topPosition + "px"
+        }
+    
+        function createElement (name, properties, style) {
+            var el = document.createElement(name)
+            Object.assign(el, properties)
+            Object.assign(el.style, style)
+            return el
+        }
+       
+        var checkbox = document.getElementsByName('display');
+        name_list = []
+        for (var i=0; i<checkbox.length; i++){
+            //console.log(document.getElementsByName('result_display')[i])
+            if (document.getElementsByName('display')[i].checked == true){
+                
+                name_list.push(document.getElementsByName('display')[i].value)
+                
+            }
+        }; 
+        // create a `stage` object
+        $("#viewport").empty()
+        var stage = new NGL.Stage("viewport");
+        var labelRepr, contactRepr
+
+        
+        var labelCheckbox = createElement("input", {
+            type: "checkbox",
+            id : "label_control",
+            checked: true,
+            onchange: function (e) {
+              label.setVisibility(e.target.checked)
+            }
+          }, { top: getTopPosition(20), left: "70px" })
+          addElement(labelCheckbox)
+          addElement(createElement("span", {
+            innerText: "label"
+          }, { top: getTopPosition(-5), left: "92px", color: "white" }))
+
+
+          
+
+
+
+        // load a PDB structure and consume the returned `Promise`
+        stage.loadFile("https://storage.googleapis.com/nettargets-discoveryweb-protein-bucket/MD_result/"+name_list[0]+"_md_result.pdb",{name:['protein']}).then(function (component) {
+        // add a "cartoon" representation to the structure component
+            var testSele = res_data
+            console.log(testSele)
+            pdb_comp = component
+
+            protein = component.addRepresentation("cartoon",
+                                {sele: "protein", color: "chainindex"})
+
+            bsite=component.addRepresentation("licorice", {
+                    sele: (testSele),
+                    colorValue: "lightgrey"
+                    });
+            label  = component.addRepresentation('label', {
+                sele :(testSele),
+                labelType: "residue",
+                labelGrouping: "residue",
+                
+                colorValue: "white"
+            })
+            lig=component.addRepresentation("licorice",
+                {sele: "hetero and not (water or ion)",
+                colorValue: "orange"
+                })
+
+        });
+
+        // listen to `hovered` signal to move tooltip around and change its text
+       
+  
+    }
+
+
+    
+    var network_data = analinfo_data
+        // make global copy of network_data 
+        global_network_data = network_data;
+      
+        // pass the network data to d3_clustergram 
+        make_d3_clustergram(network_data);
+      
+      
+        // generate a list of genes for auto complete 
+        ////////////////////////////////////////////////
+        // get all genes 
+        all_genes = [];
+      
+        // loop through row_nodes
+        for (i=0; i<row_nodes.length; i++){
+          all_genes.push( row_nodes[i]['name'] ); 
+        };
+      
+        // use Jquery autocomplete
+        ////////////////////////////////
+        $( "#gene_search_box" ).autocomplete({
+          source: all_genes
+        });
+      
+      
+      
+        // submit genes button 
+        $("#gene_search_box").keyup(function (e) {
+            if (e.keyCode == 13) {
+                // Do something
+                // console.log('pressed enter');
+                find_gene_in_clust();
+            }
+        });
+      ;
+      
+      
+      // find gene in clustergram 
+      function find_gene_in_clust(){
+        // get the searched gene 
+        search_gene = $('#gene_search_box').val();
+      
+        if (all_genes.indexOf(search_gene) != -1){
+          // zoom and highlight found gene 
+          /////////////////////////////////
+          zoom_and_highlight_found_gene(search_gene);
+          
+        }
+      
+      };
+      
+      
+      // make the svg exp map (one value per tile)
+      function make_d3_clustergram(network_data) {
+      
+        // remove old visualization
+        ////////////////////////////////
+        d3.select("#main_svg").remove();
+      
+        // initialize clustergram variables 
+        initialize_clustergram(network_data)
+      
+        // display col and row title 
+        d3.select('#row_title').style('display','block');
+        d3.select('#col_title').style('display','block');
+      
+        // toggle sidebar to make more space for visualization
+        d3.select('#wrapper').attr('class','toggled');
+      
+        // display clustergram_container and clust_instruct_container
+        d3.select('#clustergram_container').style('display','block');
+        d3.select('#clust_instruct_container').style('display','block');
+      
+        // shift the footer left
+        d3.select('#footer_div')
+          .style('margin-left','0px');
+      
+      
+        // // highlight resource types - set up type/color association
+        // highlight_resource_types();
+      
+        // define the variable zoom, a d3 method 
+        zoom = d3.behavior.zoom().scaleExtent([1,real_zoom*zoom_switch]).on('zoom',zoomed);
+      
+        // initialize matrix
+        /////////////////////////
+        matrix = [] ;
+        
+        // initialize matrix 
+        row_nodes.forEach( function(tmp,i) {
+          matrix[i] = d3.range(col_nodes.length).map(function(j) { return {pos_x: j, pos_y: i, value:0, group:0}; });
+        }); 
+      
+        // Add information to the matrix
+        network_data.links.forEach( function(link) {
+          // transfer link information to the new adj matrix
+          matrix[link.source][link.target].value = link.value;
+          // transfer group information to the adj matrix 
+          matrix[link.source][link.target].group = 1;
+          // transfer color 
+          matrix[link.source][link.target].color = link.color;
+        });
+      
+        // make clustergram visualization 
+        ///////////////////////////////////////
+      
+        // initailize clust_group with id clust_group
+        clust_group = d3.select("#svg_div")
+            .append("svg")
+            .attr('id', 'main_svg')
+            // the svg can be larger than the visualization - use svg_height and svg_width
+            .attr("width",  svg_width  + margin.left + margin.right + spillover_x_offset)
+            .attr("height", svg_height + margin.top  + margin.bottom)
+            .attr('border',1)
+            .call( zoom ) 
+            .append("g")
+            .attr('id', 'clust_group')
+            .attr("transform", "translate(" + (margin.left) + "," + (margin.top) + ")");
+      
+        // grey background rect for clustergram  
+        d3.select('#clust_group')
+          .append("rect")
+          .attr("class", "background")
+          .attr('id','grey_background')
+          .attr("width", svg_width)
+          .attr("height", viz_height);
+      
+        // make rows 
+        // use matrix for the data join, which contains a two dimensional 
+        // array of objects, each row of this matrix will be passed into the row function 
+        var row_obj =  clust_group.selectAll(".row")
+          .data(matrix)
+          .enter()
+          .append("g")
+          .attr("class", "row")
+          .attr("transform", function(d, i) { return "translate(0," + y_scale(i) + ")"; })
+          .each( row_function );
+      
+        // white lines in clustergram 
+        /////////////////////////////////
+      
+        // horizontal lines
+        row_obj.append('line')
+          .attr('x2', 20*svg_width)
+          .style('stroke-width', border_width/zoom_switch+'px')
+      
+        // append vertical line groups 
+        vert_lines = clust_group
+          .selectAll('.vert_lines')
+          .data(col_nodes)
+          .enter()
+          .append('g')
+          .attr('class','vert_lines')
+          .attr('transform', function(d,i){ return 'translate(' + x_scale(i) + ') rotate(-90)'; })
+      
+        // add vertical lines 
+        vert_lines
+          .append('line')
+          .attr('x1',0)
+          .attr('x2',-20*viz_height)
+          .style('stroke-width', border_width+'px')
+      
+      
+        // row labels 
+        //////////////////////////////////
+      
+        // white background rect for row labels
+        d3.select('#main_svg')
+          .append('rect')
+          .attr('fill', 'white')
+          .attr('width', row_label_width+'px')
+          .attr('height', '750px')
+          .attr('class','white_bars');
+      
+        // append group for row labels 
+        d3.select('#main_svg')
+          .append("g")
+          .attr('id', 'row_labels')
+          .attr("transform", "translate(" + row_margin.left + "," + row_margin.top + ")")
+      
+        // generate and position the row labels
+        var row_label_obj = d3.select('#row_labels')
+          .selectAll('.row_label_text')
+          .data(row_nodes)
+          .enter()
+          .append('g')
+          .attr('class','row_label_text')
+          .attr('transform', function(d, i) { return "translate(0," + y_scale(i) + ")"; })
+          .on('click', reorder_click_row )
+          .on('mouseover', function(){
+            // highlight text
+            d3.select(this).select('text')
+              .style('font-weight','bold');
+          })
+          .on("mouseout", function mouseout() {
+            d3.select(this).select('text')
+              .style('font-weight','normal');
+            // reset highlighted col 
+            d3.select('#clicked_row')
+              .style('font-weight','bold');
+          });
+      
+        // append row label text 
+        row_label_obj
+          .append('text')
+          // !! this will be fixed once I have separate x and y scales 
+          // !! can be improved 
+          .attr('y', y_scale.rangeBand()/2 )
+          .attr('dy', y_scale.rangeBand()/4)
+          .attr('text-anchor','end')
+          .style('font-size',default_fs_row+'px')
+          .text(function(d, i) { return d.name; } )
+      
+        // append rectangle behind text 
+        row_label_obj
+          .insert('rect','text')
+          .attr('x',-10)
+          .attr('y',0)
+          .attr('width',10)
+          .attr('height',10)
+          .style('opacity',0);
+      
+        // change the size of the highlighting rects 
+        row_label_obj
+          .each(function(){
+            // get the bounding box of the row label text 
+            var bbox = d3.select(this)
+                         .select('text')[0][0]
+                         .getBBox();
+      
+            // use the bounding box to set the size of the rect 
+            d3.select(this)
+              .select('rect')
+            .attr('x', bbox.x*0.5)
+            .attr('y', 0)
+            .attr('width', bbox.width*0.5)
+            .attr('height', y_scale.rangeBand())
+            .style('fill','yellow')
+            .style('opacity',0);
+          });
+      
+        // col labels 
+        //////////////////////////////////
+      
+        // white background rect for col labels 
+        d3.select('#main_svg')
+          .append('rect')
+          .attr('fill', 'white')
+          .attr('height', col_label_width+'px')
+          .attr('width', '750px')
+          .attr('class','white_bars');
+      
+        // append group for column labels 
+        d3.select('#main_svg')
+          .append("g")
+          .attr('id', 'col_labels')
+          .attr("transform", "translate(" + col_margin.left + "," + col_margin.top + ")");
+      
+        // offset click group column label 
+        x_offset_click = x_scale.rangeBand()/2 + border_width
+        // reduce width of rotated rects
+        reduce_rect_width = x_scale.rangeBand()* 0.36 
+      
+        // add main column label group 
+        col_label_obj = d3.select('#col_labels')
+          .selectAll(".col_label_text")
+          .data(col_nodes)
+          .enter()
+          .append("g")
+          .attr("class", "col_label_text")
+          .attr("transform", function(d, i) { return "translate(" + x_scale(i) + ") rotate(-90)"; })
+      
+        // append group for individual column label 
+        col_label_click = col_label_obj
+          // append new group for rect and label (not white lines)
+          .append('g')
+          .attr('class','col_label_click')
+          // rotate column labels 
+          .attr('transform', 'translate('+x_scale.rangeBand()/2+','+ x_offset_click +') rotate(45)')
+          .on('click', reorder_click_col )
+          .on('mouseover', function(){
+            // highlight text
+            d3.select(this).select('text')
+              .style('font-weight','bold');
+          })
+          .on("mouseout", function mouseout() {
+            // d3.selectAll("text").classed("active", false);
+            d3.select(this).select('text')
+              .style('font-weight','normal');
+            // reset highlighted col 
+            d3.select('#clicked_col')
+              .style('font-weight','bold');
+          });
+      
+        // add column label 
+        col_label_click
+          .append("text")
+          .attr("x", 0)
+          .attr("y", x_scale.rangeBand() / 2)
+          .attr('dx',2*border_width)
+          // .attr("dy", ".32em")
+          .attr("text-anchor", "start")
+          .attr('full_name',function(d) { return d.name } )
+          .style('font-size',default_fs_col+'px')
+          // remove underscores from name 
+          .text(function(d, i) { return d.name.replace(/_/g, ' ') ; });
+      
+        // append rectangle behind text 
+        col_label_click
+          .insert('rect','text')
+          .attr('x',10)
+          .attr('y',0)
+          .attr('width',10)
+          .attr('height',10)
+          .style('opacity',0);
+      
+        // change the size of the highlighting rects
+        col_label_click
+          .each(function(){
+      
+            // get the bounding box of the row label text 
+            var bbox = d3.select(this)
+                         .select('text')[0][0]
+                         .getBBox();
+      
+            // use the bounding box to set the size of the rect 
+            d3.select(this)
+              .select('rect')
+            .attr('x', bbox.x*1.25)
+            .attr('y', 0)
+            .attr('width', bbox.width*1.25)
+            // used teh reduced rect width for the columsn 
+            // reduced because thee rects are slanted
+            .attr('height', x_scale.rangeBand()*0.6)
+            // .attr('height', reduce_rect_width)
+            .style('fill','yellow')
+            .style('opacity',0);
+          });
+      
+      
+        // add triangle under rotated labels
+        col_label_click
+          .append('path')
+          .style('stroke-width',0)
+          .attr('d', function(d) { 
+              // x and y are flipped since its rotated 
+              origin_y = - border_width
+              start_x  = 0;
+              final_x  =  x_scale.rangeBand() - reduce_rect_width ;
+              start_y  = -(x_scale.rangeBand() - reduce_rect_width + border_width) ;
+              final_y  =  -border_width;
+              output_string = 'M '+origin_y+',0 L ' + start_y + ',' + start_x + ', L ' + final_y + ','+final_x+' Z';
+              return output_string;
+             })
+          .attr('fill','#eee')
+          // change the colors of the triangles 
+          // .attr('fill', function(d) {
+          //   // look up color using data_group
+          //   inst_color = res_color_dict[d.name];
+          //   return inst_color;
+          // });
+      
+      
+        // Rects to hide spillover 
+        ///////////////////////////////
+      
+        // white rect to cover excess labels 
+        d3.select('#main_svg')
+          .append('rect')
+          .attr('fill', 'white')
+          .attr('width',  row_label_width+'px')
+          .attr('height', col_label_width+'px')
+          .attr('id','top_left_white');
+      
+      
+        // hide spillover from right
+        d3.select('#main_svg')
+          .append('rect')
+          .attr('fill', 'white')
+          .attr('width', '200px')
+          .attr('height', '750px')
+          .attr('transform', function() { 
+            tmp_left = margin.left + svg_width;
+            // compensate for margin
+            tmp_top = margin.top - 5;
+            return 'translate('+tmp_left+','+tmp_top+')'
+          })
+          .attr('class','white_bars');
+      
+        // hide spillover from slanged column labels
+        d3.select('#main_svg')
+          .append('path')
+          .style('stroke-width','0')
+          // mini-language for drawing path in d3, used to draw triangle 
+          .attr('d', 'M 0,0 L 500,-500, L 500,0 Z')
+          .attr('fill','white')
+          .attr('id','slant_traingle')
+          .attr('transform', function(){
+            tmp_left = (margin.left + svg_width );
+            tmp_top = col_label_width ; 
+            return 'translate('+tmp_left+','+tmp_top+')' 
+          })
+      
+      
+        // initialize zoom and translate 
+        ///////////////////////////////////
+      
+        // initialize translate vector to compensate for label margins 
+        zoom.translate([ margin.left, margin.top]);
+      
+        // resize window 
+        d3.select(window).on('resize', timeout_resize); 
+      
+        // disable double-click zoom: double click should reset zoom level 
+        // do this for all svg elements 
+        d3.selectAll("svg").on("dblclick.zoom", null);    
+      
+        // double click to reset zoom - add transition 
+        d3.select('#main_svg')
+          // for some reason, do not put brackets in these functions 
+          .on('dblclick', function(){
+            // apply the following two translate zoom to reset zoom 
+            // programatically 
+            two_translate_zoom(0,0,1)
+          } );
+      };
+      
+      // row function 
+      function row_function(row_data) {
+        var colors = d3.scale.linear().domain([0, 0.7,1.4]).range(["#003366", '#6699CC', '#FF0033'])
+        // generate tiles in the current row 
+
+        cell =  d3.select(this)
+          // data join 
+          .selectAll(".cell")
+          .data( row_data )
+          .enter()
+          .append("rect")
+          .attr('class', 'cell')
+          .attr("x", function(d) { return x_scale(d.pos_x); })
+          .attr("width", x_scale.rangeBand())
+          .attr("height", y_scale.rangeBand())
+          .style("fill-opacity", function(d) { 
+            // calculate output opacity using the opacity scale 
+            output_opacity = opacity_scale( Math.abs(d.value) );
+            return output_opacity ; 
+          }) 
+          // switch the color based on up/dn enrichment 
+          .style('fill', function(d) { 
+           
+            //return d.value > 0 ? '#FF0000': '#FFFFFF' ;
+             return colors(d.value);
+          } )
+          .on("mouseover", function(p) {
+            d3.selectAll(".row_label_text text").classed("active", function(d, i) { return i == p.pos_y; });
+            d3.selectAll(".col_label_text text").classed("active", function(d, i) { return i == p.pos_x; });
+          })
+          .on("mouseout", function mouseout() {
+            d3.selectAll("text").classed("active", false);
+          })
+      };
+      
+      function reorder_clust_rank(order_type) {
+      
+        // load orders 
+        if ( order_type == 'clust' ){ 
+          // order by enrichment 
+          x_scale.domain(orders.clust_row);
+          y_scale.domain(orders.clust_col);
+        }
+        else if (order_type == 'rank'){
+          // order by enrichment 
+          x_scale.domain(orders.rank_row);
+          y_scale.domain(orders.rank_col);
+        };
+      
+        // define the t variable as the transition function 
+        var t = clust_group.transition().duration(2500);
+      
+        // reorder matrix
+        t.selectAll(".row")
+          .attr("transform", function(d, i) { return "translate(0," + y_scale(i) + ")"; })
+          .selectAll(".cell")
+          .attr('x', function(d){ 
+            return x_scale(d.pos_x);
+          })
+      
+        // Move Row Labels
+        d3.select('#row_labels').selectAll('.row_label_text')
+          .transition().duration(2500)
+          .attr('transform', function(d, i) { return 'translate(0,' + y_scale(i) + ')'; });
+      
+        // t.selectAll(".column")
+        d3.select('#col_labels').selectAll(".col_label_text")
+          .transition().duration(2500)
+          .attr("transform", function(d, i) { 
+            return "translate(" + x_scale(i) + ")rotate(-90)"; 
+          });
+      };
+      
+      // initialize clustergram: size, scales, etc. 
+      function initialize_clustergram(network_data){
+        
+        // move network_data information into global variables 
+        col_nodes  = network_data.col_nodes ;
+        row_nodes  = network_data.row_nodes ;
+        inst_links = network_data.links; 
+      
+        // define screen limits
+        min_screen_width = 800;
+        max_screen_width = 2500;
+      
+        // define screen limits
+        min_viz_width = 400;
+        max_viz_width = 2000;
+        min_viz_height = 600;
+        max_viz_height = 1500;
+      
+        // initialize visualization size
+        set_visualization_size();
+      
+        // font size controls 
+        // scale default font size: input domain is the number of nodes
+        min_node_num = 10;
+        max_node_num = 2000;
+      
+        // // scale col and row font size 
+        // ///////////////////////////////
+        // // max and min font sizes 
+        // min_fs = 0.01 * scale_fs_screen(screen_width);
+        // max_fs = 15 * scale_fs_screen(screen_width);
+      
+        // scale only col font size 
+        ///////////////////////////////
+        // max and min font sizes 
+        min_fs = 0.05;
+        max_fs = 15;
+      
+        // output range is the font size 
+        scale_font_size = d3.scale.log().domain([min_node_num,max_node_num]).range([max_fs,min_fs]).clamp('true');
+      
+        // controls how much the font size is increased by zooming when the number of nodes is at its max
+        // and zooming is required 
+        // 1: do not increase font size while zooming
+        // 0: increase font size while zooming
+        // allow some increase in font size when zooming
+        min_fs_zoom = 0.95;
+        // allow full increase in font size when zooming
+        max_fs_zoom = 0.0; 
+        // define the scaling for the reduce font size factor 
+        scale_reduce_font_size_factor = d3.scale.log().domain([min_node_num,max_node_num]).range([min_fs_zoom,max_fs_zoom]).clamp('true');
+        // // define the scaling for the zoomability of the adjacency matrix
+        // scale_zoom  = d3.scale.log().domain([min_node_num,max_node_num]).range([2,17]).clamp('true');
+      
+        // define screen width font size scale 
+        // having a small screen width should reduce the font size of the columns 
+        // this will be compensated by increasing the available real zoom 
+        scale_fs_screen_width = d3.scale.linear().domain( [min_viz_width,max_viz_width]).range([0.75,1.15]).clamp('true');
+        scale_fs_screen_height = d3.scale.linear().domain([min_viz_width,max_viz_width]).range([0.75,1.15]).clamp('true');
+      
+        // the default font sizes are set here 
+        default_fs_row = scale_font_size(row_nodes.length)* scale_fs_screen_height(viz_height); 
+        // the colum font size is scaled by the width 
+        default_fs_col = scale_font_size(col_nodes.length)* scale_fs_screen_width(viz_width); 
+      
+        // correct for forcing the tiles to be squares - if they are forced, then use the col font size scaling on the rows 
+        if (force_square == 1){
+          // scale the row font size by the col scaling  
+          default_fs_row = default_fs_col;
+        };
+      
+        // calculate the reduce font-size factor: 0 for no reduction in font size and 1 for full reduction of font size
+        reduce_font_size_factor_row = scale_reduce_font_size_factor(row_nodes.length);
+        reduce_font_size_factor_col = scale_reduce_font_size_factor(col_nodes.length);
+      
+        // set up the real zoom (2d zoom) as a function of the number of col_nodes
+        // since these are the nodes that are zoomed into in 2d zooming 
+        real_zoom_scale_col = d3.scale.linear().domain([min_node_num,max_node_num]).range([2,5]).clamp('true');
+        // scale the zoom based on the screen size
+        // smaller screens can zoom in more, compensates for reduced font size with small screen 
+        real_zoom_scale_screen = d3.scale.linear().domain([min_screen_width,max_screen_width]).range([2,1]).clamp('true');
+        // calculate the zoom factor - the more nodes the more zooming allowed
+        real_zoom = real_zoom_scale_col(col_nodes.length)*real_zoom_scale_screen(screen_width);
+      
+        // set opacity scale 
+        max_link = _.max( inst_links, function(d){ return Math.abs(d.value) } )
+        opacity_scale = d3.scale.linear().domain([0, Math.abs(max_link.value) ]).clamp(true).range([0.0,1.0]) ; 
+      };
+      
+      function set_visualization_size(){
+      
+        // find the label with the most characters and use it to adjust the row and col margins 
+        row_max_char = _.max(row_nodes, function(inst) {return inst.name.length;}).name.length;
+        col_max_char = _.max(col_nodes, function(inst) {return inst.name.length;}).name.length;
+      
+        // define label scale parameters: the more characters in the longest name, the larger the margin 
+        min_num_char = 5;
+        max_num_char = 40;
+        min_label_width = 60;
+        max_label_width = 200;
+        label_scale = d3.scale.linear().domain([min_num_char,max_num_char]).range([min_label_width,max_label_width]).clamp('true');
+      
+        // set col_label_width and row_label_width
+        row_label_width = label_scale(row_max_char) ;
+        triangle_space = 30;
+        col_label_width = label_scale(col_max_char) + triangle_space ;
+      
+        // distance between labels and clustergram
+        label_margin = 5;
+      
+        // Margins 
+        col_margin = { top:col_label_width - label_margin, right:0, bottom:0, left:row_label_width              };
+        row_margin = { top:col_label_width,                right:0, bottom:0, left:row_label_width-label_margin };
+        margin     = { top:col_label_width,                right:0, bottom:0, left:row_label_width              };
+      
+        // from http://stackoverflow.com/questions/16265123/resize-svg-when-window-is-resized-in-d3-js
+        x_window = window.innerWidth;
+        y_window = window.innerHeight;
+      
+        console.log(x_window, y_window)
+        // set wrapper width and height
+        d3.select('#wrapper').style('width', x_window*0.65 +"px");
+        d3.select('#wrapper').style('height',y_window);
+      
+        // initalize clutergram container 
+        // 
+        // get screen width 
+        screen_width  = Number(d3.select('#wrapper').style('width').replace('px',''));
+        // get screen height
+        screen_height = Number(d3.select('#wrapper').style('height').replace('px',''));
+      
+        // define offsets for permanent row and col margins 
+        // takes into consideration sidebar
+        // reducing sidebar width, row_offset used to be 280 when left margin was 260
+        // now, rowoffset is 240 when left margin is reduced to 220 (-40px)
+        // further reducing width of from 220 to 210px - left margin will be 230px
+        container_row_offset = 230;
+        // takes into consideration footer and header margin
+        container_col_offset = 50;
+      
+        // adjust container with border
+        // define width and height of clustergram container 
+        width_clust_container  = screen_width - container_row_offset;
+        height_clust_container = screen_height - container_col_offset;
+      
+      
+        // Clustergram Container 
+        ///////////////////////////////
+        // set clustergram_container and clust_and_row_container dimensions 
+        // clustergram_container
+        d3.select('#clustergram_container').style('width', width_clust_container+'px')
+        d3.select('#clustergram_container').style('height', height_clust_container+'px')
+        // clust_and_row_container
+        d3.select('#clust_and_row_container').style('width',width_clust_container+'px')
+        d3.select('#clust_and_row_container').style('height',height_clust_container+'px')
+      
+        // SVG 
+        ////////////////
+        // define offset for svg
+        // compenstates for permanent row and column labels as well
+        // as x spillover 
+        spillover_x_offset = label_scale(col_max_char)* 0.8 ;
+        svg_x_offset = 50 + spillover_x_offset;
+        svg_y_offset = 50;
+      
+        // svg size: less than container size 
+        // subtract fixed length for permanent col and row labels and variable length for specific col and row labels 
+        svg_width  = width_clust_container  - svg_x_offset - row_label_width ;
+        svg_height = height_clust_container - svg_y_offset - col_label_width ;
+      
+        // define a visualization size, which may be smaller than the svg size if
+        // there are a small number of rows 
+        // or if there are more columns than rows 
+        //////////////////////////////////////////////////
+      
+        // viz_width
+        ////////////////////////
+        // set up a scale that will prevent the visualization
+        // from stretching a few rows across the entire width 
+        prevent_col_stetch = d3.scale.linear().domain([1,20]).range([0.05,1]).clamp('true');
+      
+        viz_width = svg_width * prevent_col_stetch(col_nodes.length) ; 
+      
+        // viz_height 
+        ////////////////
+        // ensure that width of rects is not less than height 
+        if (col_nodes.length > row_nodes.length){
+          // scale the height 
+          viz_height = svg_width*(row_nodes.length/col_nodes.length);
+      
+          // keep track of whether or not a force square has occurred 
+          // so that I can adjust the font accordingly 
+          // here it has
+          force_square = 1;
+      
+          // make sure that this scaling does not cause the viz to be taller 
+          // than the svg 
+          if (viz_height > svg_height){
+            // make the height equal to the width, to force square tiles - rather than thin tiles that 
+            // are taller than they are wide 
+            viz_height = svg_height;
+      
+            // keep track of whether or not a force square has occurred 
+            // here it has not
+            force_square = 0;
+          };
+        }
+        // use the unaltered height 
+        else{
+          // the height will be calculated normally - leading to wide tiles 
+          viz_height = svg_height;
+      
+          // keep track of whether or not a force square has occurred 
+          // here it has not
+          force_square = 0;
+        };
+      
+        // scaling functions used to position tiles 
+        x_scale = d3.scale.ordinal().rangeBands([0, viz_width]) ;
+        y_scale = d3.scale.ordinal().rangeBands([0, viz_height]); 
+      
+        // Sort rows and columns 
+        orders = {
+          name:    col_nodes,
+          // rank 
+          rank_row: d3.range(col_nodes.length).sort(function(a, b) { return col_nodes[b].rank  - col_nodes[a].rank; }),
+          rank_col: d3.range(row_nodes.length).sort(function(a, b) { return row_nodes[b].rank  - row_nodes[a].rank; }),
+          // clustered 
+          // the clust order is stored under sort !! 
+          clust_row: d3.range(col_nodes.length).sort(function(a, b) { return col_nodes[b].sort  - col_nodes[a].sort; }),
+          clust_col: d3.range(row_nodes.length).sort(function(a, b) { return row_nodes[b].sort  - row_nodes[a].sort; })
+          
+        };
+
+        // Assign the default sort order for the columns 
+        x_scale.domain(orders.clust_row);
+        y_scale.domain(orders.clust_col);
+      
+        // define border width 
+        border_width = x_scale.rangeBand()/16.66;
+      
+        // define the zoom switch value - use viz_width and viz_height
+        // switch from 1 to 2d zoom 
+        zoom_switch = (viz_width/col_nodes.length)/(viz_height/row_nodes.length);
+      };
+      
+      // recalculate the size of the visualization
+      // and remake the clustergram 
+      function reset_visualization_size(){
+      
+        // recalculate the size 
+        set_visualization_size();
+      
+        // reset zoom and translate 
+        zoom.scale(1).translate([margin.left, margin.top]);
+      
+        // pass the network data to d3_clustergram 
+        make_d3_clustergram(global_network_data);
+        
+        // // turn off the wait sign 
+        // $.unblockUI();
+      };
+      
+      // define zoomed function 
+      function zoomed() {
+      
+        // gather transformation components 
+        /////////////////////////////////////
+        // gather zoom components 
+        zoom_x = d3.event.scale;
+        zoom_y = d3.event.scale;
+      
+        // gather translate vector components 
+        trans_x = d3.event.translate[0] - margin.left;
+        trans_y = d3.event.translate[1] - margin.top;
+        
+        // apply transformation: no transition duration when zooming with mouse 
+        apply_transformation(trans_x, trans_y, zoom_x, zoom_y, 0);
+      
+        // reset highlighted col 
+        d3.select('#clicked_col')
+          // .style('font-size',default_fs_col*1.25)
+          .style('font-weight','bold');
+      };
+      
+      // apply transformation 
+      function apply_transformation(trans_x, trans_y, zoom_x, zoom_y, duration){
+       
+        // define d3 scale 
+        d3_scale = zoom_x ; 
+      
+        // y - rules 
+        ///////////////////////////////////////////////////
+      
+        // available panning room in the y direction 
+        // multiple extra room (zoom - 1) by the width
+        // always defined in the same way 
+        pan_room_y = (d3_scale - 1) * svg_height ;
+      
+        // if the transformation is from a gene search, the remove pan_room_y restriction 
+        if (duration > 0){
+          // set pan_room_y to svg_height - removing restriction 
+          pan_room_y = svg_height;
+        };
+      
+        // do not translate if translate in y direction is positive 
+        if (trans_y >= 0 ) {
+          console.log('\nrestrict panning in the positive y direction')
+          console.log(trans_y)
+          // restrict transformation parameters 
+          // no panning in either direction 
+          trans_y = 0; 
+        }
+        // restrict y pan to pan_room_y if necessary 
+        else if (trans_y <= -pan_room_y) {
+          trans_y = -pan_room_y; 
+          console.log('\nrestrict y panning based on y panning ')
+        };
+      
+        // x - rules 
+        ///////////////////////////////////////////////////
+        // zoom in y direction only - translate in y only
+        if (d3_scale < zoom_switch) {
+          // no x translate or zoom 
+          trans_x = 0;
+          zoom_x = 1;
+      
+        }
+        // zoom in both directions 
+        // scale is greater than zoom_switch 
+        else{
+      
+          // available panning room in the x direction 
+          // multiple extra room (zoom - 1) by the width
+          pan_room_x = (d3_scale/zoom_switch - 1) * svg_width ;
+      
+          // no panning in the positive direction 
+          if (trans_x > 0){
+      
+            // restrict transformation parameters 
+            // no panning in the x direction 
+            trans_x = 0; 
+            // set zoom_x
+            zoom_x = d3_scale/zoom_switch;
+      
+          }
+          // restrict panning to pan_room_x 
+          else if (trans_x <= -pan_room_x){
+      
+            // restrict transformation parameters 
+            // no panning in the x direction 
+            trans_x = -pan_room_x; 
+            // set zoom_x 
+            zoom_x = d3_scale/zoom_switch;
+      
+          }
+          // allow two dimensional panning 
+          else{
+      
+            // restrict transformation parameters 
+            // set zoom_x 
+            zoom_x = d3_scale/zoom_switch;
+      
+          };
+      
+        };
+       
+        // apply transformation and reset translate vector 
+        // the zoom vector (zoom.scale) never gets reset 
+        ///////////////////////////////////////////////////
+        // translate clustergram 
+        clust_group
+          .attr('transform','translate(' + [ margin.left + trans_x, margin.top + trans_y ] + ') scale('+ zoom_x +',' + zoom_y + ')');
+      
+        // transform row labels 
+        d3.select('#row_labels')
+          .attr('transform','translate(' + [row_margin.left , margin.top + trans_y] + ') scale(' + zoom_y + ')');
+      
+        // transform col labels
+        // move down col labels as zooming occurs, subtract trans_x - 20 almost works 
+        d3.select('#col_labels')
+          .attr('transform','translate(' + [col_margin.left + trans_x , col_margin.top] + ') scale(' + zoom_x + ')');
+      
+        // reset translate vector - add back margins to trans_x and trans_y  
+        zoom
+          .translate([ trans_x +  margin.left, trans_y + margin.top]);
+      
+        // Font Sizes 
+        //////////////////
+        // reduce the font size by dividing by some part of the zoom 
+        // if reduce_font_size_factor_ is 1, then the font will be divided by the whole zoom - and the labels will not increase in size 
+        // if reduce_font_size_factor_ is 0, then the font will be divided 1 - and the labels will increase cuction of the font size 
+        reduce_font_size = d3.scale.linear().domain([0,1]).range([1,zoom_y]).clamp('true');
+        // scale down the font to compensate for zooming 
+        fin_font = default_fs_row/(reduce_font_size(reduce_font_size_factor_row)); 
+        // add back the 'px' to the font size 
+        fin_font = fin_font + 'px';
+        // change the font size of the labels 
+        d3.selectAll('.row_label_text')
+          .select('text')
+          .style('font-size', fin_font);
+      
+        // re-size of the highlighting rects 
+        d3.select('#row_labels')
+          .each(function(){
+            // get the bounding box of the row label text 
+            var bbox = d3.select(this)
+                         .select('text')[0][0]
+                         .getBBox();
+      
+            // use the bounding box to set the size of the rect 
+            d3.select(this)
+              .select('rect')
+            .attr('x', bbox.x*0.5)
+            .attr('y', 0)
+            .attr('width', bbox.width*0.5)
+            .attr('height', y_scale.rangeBand())
+            .style('fill','yellow');
+          });
+      
+      
+        // reduce font-size to compensate for zoom 
+        // calculate the recuction of the font size 
+        reduce_font_size = d3.scale.linear().domain([0,1]).range([1,zoom_x]).clamp('true');
+        // scale down the font to compensate for zooming 
+        fin_font = default_fs_col/(reduce_font_size(reduce_font_size_factor_col)); 
+        // add back the 'px' to the font size 
+        fin_font = fin_font + 'px';
+        // change the font size of the labels 
+        d3.selectAll('.col_label_text')
+          .select('text')
+          .style('font-size', fin_font);
+      
+        // change the size of the highlighting rects
+        // col_label_click
+        d3.select('#col_labels')
+          .each(function(){
+      
+            // get the bounding box of the row label text 
+            var bbox = d3.select(this)
+                         .select('text')[0][0]
+                         .getBBox();
+      
+            // use the bounding box to set the size of the rect 
+            d3.select(this)
+              .select('rect')
+            .attr('x', bbox.x*1.25)
+            .attr('y', 0)
+            .attr('width', bbox.width * 1.25)
+            // used teh reduced rect width for the columsn 
+            // reduced because thee rects are slanted
+            .attr('height', x_scale.rangeBand()*0.6)
+            .style('fill','yellow')
+            .style('opacity',0);
+          });
+      
+      };
+      
+      // reorder columns with row click 
+      function reorder_click_row(d,i){
+      
+        // get inst row (gene)
+        inst_gene = d3.select(this).select('text').text();
+      
+        // highlight clicked column 
+        // first un-highlight all others 
+        d3.selectAll('.rol_label_text').select('text')
+          .style('font-weight','normal');
+        // remove previous id 
+        d3.select('#clicked_row')
+          .attr('id','');
+      
+        // highlight current 
+        d3.select(this).select('text')
+          .style('font-weight','bold')
+          .attr('id','clicked_row');
+      
+        // find the row number of this term from row_nodes 
+        // gather row node names 
+        tmp_arr = []
+        for (i=0; i<row_nodes.length; i++){
+          tmp_arr.push(row_nodes[i].name);
+        }
+      
+        // find index 
+        inst_row = _.indexOf( tmp_arr, inst_gene );
+      
+        // gather the values of the input genes 
+        tmp_arr = [];
+        for (j=0; j<col_nodes.length; j++) {
+          tmp_arr.push(matrix[inst_row][j].value);
+        }
+      
+        // sort the rows 
+        tmp_sort = d3.range( tmp_arr.length ).sort(function(a, b) { return tmp_arr[b]  - tmp_arr[a]; })
+      
+        // resort the columns (resort x)
+        x_scale.domain(tmp_sort);
+      
+        // reorder
+        ////////////////////
+      
+        // define the t variable as the transition function 
+        var t = clust_group.transition().duration(1000);
+      
+        // reorder matrix
+        t.selectAll(".cell")
+          .attr('x', function(d){ 
+          return x_scale(d.pos_x);
+        });
+      
+        // Move Row Labels
+        d3.select('#col_labels').selectAll(".col_label_text")
+          .transition().duration(2500)
+          .attr("transform", function(d, i) { 
+            return "translate(" + x_scale(i) + ")rotate(-90)"; 
+          });
+      
+        // // zoom into and highlight selected row 
+        // zoom_and_highlight_found_gene(inst_gene);
+      
+      };
+      
+      // reorder rows with column click 
+      function reorder_click_col(d,i){
+      
+        // get inst col (term)
+        inst_term = d3.select(this).select('text').attr('full_name')
+      
+        // highlight clicked column 
+        // first un-highlight all others 
+        d3.selectAll('.col_label_text').select('text')
+          .style('font-weight','normal');
+        // remove previous id 
+        d3.select('#clicked_col')
+          .attr('id','');
+      
+        // highlight current 
+        d3.select(this).select('text')
+          .style('font-weight','bold')
+          .attr('id','clicked_col');
+      
+        // find the column number of this term from col_nodes 
+        // gather column node names 
+        tmp_arr = []
+        for (i=0; i<col_nodes.length; i++){
+          tmp_arr.push(col_nodes[i].name);
+        };
+      
+        // find index 
+        inst_col = _.indexOf( tmp_arr, inst_term );
+      
+        // gather the values of the input genes 
+        tmp_arr = [];
+        for (i=0; i<row_nodes.length; i++) {
+          tmp_arr.push(matrix[i][inst_col].value);
+        };
+      
+        // sort the rows 
+        tmp_sort = d3.range( tmp_arr.length).sort(function(a, b) { return tmp_arr[b]  - tmp_arr[a]; })
+      
+        // resort rows - y axis 
+        y_scale.domain(tmp_sort);
+      
+        // reorder
+        // define the t variable as the transition function 
+        var t = clust_group.transition().duration(2500);
+      
+        // reorder matrix
+        t.selectAll(".row")
+          .attr("transform", function(d, i) { return "translate(0," + y_scale(i) + ")"; })
+          .selectAll(".cell")
+          .attr('x', function(d){ 
+            return x_scale(d.pos_x);
+          })
+      
+        // Move Row Labels
+        // 
+        d3.select('#row_labels').selectAll('.row_label_text')
+          .transition().duration(2500)
+          .attr('transform', function(d, i) { return 'translate(0,' + y_scale(i) + ')'; });
+      
+        // t.selectAll(".column")
+        d3.select('#col_labels').selectAll(".col_label_text")
+          .transition().duration(2500)
+          .attr("transform", function(d, i) { 
+            return "translate(" + x_scale(i) + ")rotate(-90)"; 
+          });
+      
+        // highlight selected column 
+        ///////////////////////////////
+      
+        // unhilight and unbold all columns (already unbolded earlier)
+        d3.selectAll('.col_label_text')
+          .select('rect')
+          .style('opacity',0);
+      
+        // highlight column name
+        d3.select(this)
+          .select('rect')
+          .style('opacity',1);
+      
+      
+      };
+      
+      // resize clustergram with screensize change
+      var doit;
+      function timeout_resize(){
+      
+        // clear timeout
+        clearTimeout(doit);
+      
+        // // set up wait message before request is made 
+        // $.blockUI({ css: { 
+        //         border: 'none', 
+        //         padding: '15px', 
+        //         backgroundColor: '#000', 
+        //         '-webkit-border-radius': '10px', 
+        //         '-moz-border-radius': '10px', 
+        //         opacity: .8, 
+        //         color: '#fff' 
+        //     } });
+      
+        doit = setTimeout( reset_visualization_size, 500)  ;
+      
+      };
+      
+      
+      // interpolate pan and zoom
+      function interpolate_pan_zoom(pan_dx, pan_dy, fin_zoom){
+      };
+      
+      function two_translate_zoom(pan_dx, pan_dy, fin_zoom){
+      
+        console.log('two_translate_zoom')
+        console.log('pan_dx: '+String(pan_dx))
+        console.log('pan_dy: '+String(pan_dy))
+        console.log('fin_zoom: '+String(fin_zoom))
+      
+        // define the commonly used variable half_height
+        var half_height = viz_height/2 ;
+      
+        // y pan room, the pan room has to be less than half_height since 
+        // zooming in on a gene that is near the top of the clustergram also causes 
+        // panning out of the visible region  
+        var y_pan_room = ((half_height)/zoom_switch);
+      
+      
+        // prevent visualization from panning down too much 
+        // when zooming into genes near the top of the clustergram 
+        if (pan_dy >= half_height - y_pan_room){
+      
+          console.log('restricting pan down')
+      
+          // prevent the clustergram from panning down too much 
+          // if the amount of panning is equal to the half_height then it needs to be reduced
+          // effectively, the the visualization needs to be moved up (negative) by some factor
+          // of the half width of the visualization. If there was no zooming involved, then the
+          // visualization would be centered first, then panned to center the top term, then 
+          // the correction would re-center it. However, because of the zooming the offset is 
+          // reduced by the zoom factor (this is because the panning is occurring on something 
+          // that will be zoomed into - this is why the pan_dy value is not scaled in the two
+          // translate transformations, but it has to be scaled afterwards to set the translate
+          // vector)
+          // pan_dy = half_height - (half_height)/zoom_switch
+      
+          // if pan_dy is greater than the pan room, then panning has to be restricted
+          // start by shifting back up (negative) by half_height/zoom_switch then shift bak down
+          // by the difference between half_height and pan_dy (so that the top of the clustergram is 
+          // visible)
+          var shift_top_viz = half_height - pan_dy ;
+          var shift_up_viz  = - half_height/zoom_switch + shift_top_viz ; 
+      
+          // reduce pan_dy so that the visualization does not get panned to far down
+          pan_dy = pan_dy + shift_up_viz ;
+        };
+      
+        // prevent visualization from panning up too much
+        // when zooming into genes at the bottom of the clustergram 
+        if (pan_dy < -(half_height - y_pan_room) ){
+      
+          console.log('restricting pan up')
+          var shift_top_viz = half_height + pan_dy ;
+      
+          // does not seem to be needed 
+          /////////
+          // move up by one row height 
+          // var move_up_one_row = y_scale.rangeBand();
+          // // do not move up one row if the clustergram is square 
+          // if (zoom_switch == 1){
+          //   move_up_one_row = 0;
+          // };
+      
+          var shift_up_viz  =  half_height/zoom_switch - shift_top_viz; //- move_up_one_row;
+      
+          // reduce pan_dy so that the visualization does not get panned to far down
+          pan_dy = pan_dy + shift_up_viz ;
+      
+      
+        };
+      
+        // will improve this !!
+        zoom_y = fin_zoom; 
+        zoom_x = 1;
+      
+        // search duration - the duration of zooming and panning 
+        search_duration =700;
+      
+        // center_y
+        center_y = -(zoom_y -1)*half_height;
+      
+        // console.log('\ncenter_y\t'+center_y+'\n')
+        // console.log('\npan_dy\t'+pan_dy+'\n')
+      
+        // transform clsut group 
+        clust_group
+          .transition()
+          .duration(search_duration)
+          // first apply the margin transformation
+          // then zoom, then apply the final transformation 
+          .attr('transform', 'translate(' + [ margin.left,  margin.top + center_y ] + ')'+' scale('+ 1 +',' + zoom_y + ')'+'translate(' + [  pan_dx,  pan_dy ] + ')');
+      
+        // transform row labels 
+        d3.select('#row_labels')
+          .transition()
+          .duration(search_duration)
+          .attr('transform', 'translate(' + [ row_margin.left,  margin.top + center_y ] + ')'+' scale('+ zoom_y +',' + zoom_y + ')'+'translate(' + [  0,  pan_dy ] + ')');
+      
+        // transform col labels
+        // move down col labels as zooming occurs, subtract trans_x - 20 almost works 
+        d3.select('#col_labels')
+          .transition()
+          .duration(search_duration)
+          // .attr('transform','translate(' + [col_margin.left + pan_dx , col_margin.top] + ') scale(' + 1 + ')');
+          .attr('transform', 'translate(' + [ col_margin.left,  col_margin.top ] + ')'+' scale('+ 1 +',' + 1 + ')'+'translate(' + [  pan_dx,  0 ] + ')');
+      
+      
+        // Font Sizes 
+        //////////////////
+        // reduce font-size to compensate for zoom 
+        // calculate the recuction of the font size 
+        reduce_font_size = d3.scale.linear().domain([0,1]).range([1,zoom_y]).clamp('true');
+        // scale down the font to compensate for zooming 
+        fin_font = default_fs_row/(reduce_font_size(reduce_font_size_factor_row)); 
+        // add back the 'px' to the font size 
+        fin_font = fin_font + 'px';
+        // change the font size of the labels 
+        d3.selectAll('.row_label_text')
+          .transition()
+          .duration(search_duration)
+          .select('text')
+          .style('font-size', fin_font);
+      
+        // resize the highlighting bar when performing two transition zoom 
+        // re-size of the highlighting rects 
+        d3.select('#row_labels')
+          .each(function(){
+            // get the bounding box of the row label text 
+            var bbox = d3.select(this)
+                         .select('text')[0][0]
+                         .getBBox();
+      
+            // use the bounding box to set the size of the rect 
+            d3.select(this)
+              .select('rect')
+            .attr('x', bbox.x*0.5)
+            .attr('y', 0)
+            .attr('width', bbox.width*0.5)
+            .attr('height', y_scale.rangeBand())
+            .style('fill','yellow');
+          });
+      
+      
+      
+        // reduce font-size to compensate for zoom 
+        // calculate the recuction of the font size 
+        reduce_font_size = d3.scale.linear().domain([0,1]).range([1,zoom_x]).clamp('true');
+        // scale down the font to compensate for zooming 
+        fin_font = default_fs_col/(reduce_font_size(reduce_font_size_factor_col)); 
+        // add back the 'px' to the font size 
+        fin_font = fin_font + 'px';
+        // change the font size of the labels 
+        d3.selectAll('.col_label_text')
+          .transition()
+          .duration(search_duration)
+          .select('text')
+          .style('font-size', fin_font);
+      
+        // set y translate: center_y is positive, positive moves the visualization down 
+        // the translate vector has the initial margin, the first y centering, and pan_dy
+        // times the scaling zoom_y  
+        var net_y_offset = margin.top + center_y +  pan_dy * zoom_y  ;
+      
+        // reset the zoom translate and zoom 
+        zoom.scale(zoom_y);
+        zoom.translate([  pan_dx, net_y_offset])
+      
+      };
+      
+      // zoom into and highlight the found the gene 
+      function zoom_and_highlight_found_gene(search_gene){
+      
+        // unhighlight and unbold all genes 
+        d3.selectAll('.row_label_text')
+          .select('text')
+          .style('font-weight','normal');
+        d3.selectAll('.row_label_text')
+          .select('rect')
+          .style('opacity',0);
+      
+        // find the index of the gene 
+        inst_gene_index = _.indexOf( all_genes, search_gene );  
+      
+        // get y position 
+        inst_y_pos = y_scale(inst_gene_index)  ;
+      
+        // make row name bold 
+        d3.selectAll('.row_label_text')
+          .filter(function(d){ return d.name == search_gene})
+          .select('text')
+          .style('font-weight','bold');
+        // highlight row name 
+        d3.selectAll('.row_label_text')
+          .filter(function(d){ return d.name == search_gene})
+          .select('rect')
+          .style('opacity',1);
+      
+        // calculate the y panning required to center the found gene 
+        pan_dy = viz_height/2 - inst_y_pos;
+      
+        // use two translate method to control zooming 
+        // pan_x, pan_y, zoom 
+        two_translate_zoom(0, pan_dy, zoom_switch );
+      };
+
+      function redraw(data){
+
+        // make global copy of network_data 
+        var  network_data = data 
+        global_network_data = network_data;
+      
+        // pass the network data to d3_clustergram 
+        make_d3_clustergram(network_data);
+      
+      
+        // generate a list of genes for auto complete 
+        ////////////////////////////////////////////////
+        // get all genes 
+        all_genes = [];
+      
+        // loop through row_nodes
+        for (i=0; i<row_nodes.length; i++){
+          all_genes.push( row_nodes[i]['name'] ); 
+        };
+      
+        // use Jquery autocomplete
+        ////////////////////////////////
+        $( "#gene_search_box" ).autocomplete({
+          source: all_genes
+        });
+      
+      
+      
+        // submit genes button 
+        $("#gene_search_box").keyup(function (e) {
+            if (e.keyCode == 13) {
+                // Do something
+                // console.log('pressed enter');
+                find_gene_in_clust();
+            }
+        });
+      ;
+      
+      
+      // find gene in clustergram 
+      function find_gene_in_clust(){
+        // get the searched gene 
+        search_gene = $('#gene_search_box').val();
+      
+        if (all_genes.indexOf(search_gene) != -1){
+          // zoom and highlight found gene 
+          /////////////////////////////////
+          zoom_and_highlight_found_gene(search_gene);
+          
+        }
+      
+      };
+      
+      
+      // make the svg exp map (one value per tile)
+      function make_d3_clustergram(network_data) {
+      
+        // remove old visualization
+        ////////////////////////////////
+        d3.select("#main_svg").remove();
+      
+        // initialize clustergram variables 
+        initialize_clustergram(network_data)
+      
+        // display col and row title 
+        d3.select('#row_title').style('display','block');
+        d3.select('#col_title').style('display','block');
+      
+        // toggle sidebar to make more space for visualization
+        d3.select('#wrapper').attr('class','toggled');
+      
+        // display clustergram_container and clust_instruct_container
+        d3.select('#clustergram_container').style('display','block');
+        d3.select('#clust_instruct_container').style('display','block');
+      
+        // shift the footer left
+        d3.select('#footer_div')
+          .style('margin-left','0px');
+      
+      
+        // // highlight resource types - set up type/color association
+        // highlight_resource_types();
+      
+        // define the variable zoom, a d3 method 
+        zoom = d3.behavior.zoom().scaleExtent([1,real_zoom*zoom_switch]).on('zoom',zoomed);
+      
+        // initialize matrix
+        /////////////////////////
+        matrix = [] ;
+        
+        // initialize matrix 
+        row_nodes.forEach( function(tmp,i) {  
+          matrix[i] = d3.range(col_nodes.length).map(function(j) { return {pos_x: j, pos_y: i, value:0, group:0}; });
+        }); 
+      
+        // Add information to the matrix
+        network_data.links.forEach( function(link) {
+          // transfer link information to the new adj matrix
+          matrix[link.source][link.target].value = link.value;
+          // transfer group information to the adj matrix 
+          matrix[link.source][link.target].group = 1;
+          // transfer color 
+          matrix[link.source][link.target].color = link.color;
+        });
+      
+        // make clustergram visualization 
+        ///////////////////////////////////////
+      
+        // initailize clust_group with id clust_group
+        clust_group = d3.select("#svg_div")
+            .append("svg")
+            .attr('id', 'main_svg')
+            // the svg can be larger than the visualization - use svg_height and svg_width
+            .attr("width",  svg_width  + margin.left + margin.right + spillover_x_offset)
+            .attr("height", svg_height + margin.top  + margin.bottom)
+            .attr('border',1)
+            .call( zoom ) 
+            .append("g")
+            .attr('id', 'clust_group')
+            .attr("transform", "translate(" + (margin.left) + "," + (margin.top) + ")");
+      
+        // grey background rect for clustergram  
+        d3.select('#clust_group')
+          .append("rect")
+          .attr("class", "background")
+          .attr('id','grey_background')
+          .attr("width", svg_width)
+          .attr("height", viz_height);
+      
+        // make rows 
+        // use matrix for the data join, which contains a two dimensional 
+        // array of objects, each row of this matrix will be passed into the row function 
+        var row_obj =  clust_group.selectAll(".row")
+          .data(matrix)
+          .enter()
+          .append("g")
+          .attr("class", "row")
+          .attr("transform", function(d, i) { return "translate(0," + y_scale(i) + ")"; })
+          .each( row_function );
+      
+        // white lines in clustergram 
+        /////////////////////////////////
+      
+        // horizontal lines
+        row_obj.append('line')
+          .attr('x2', 20*svg_width)
+          .style('stroke-width', border_width/zoom_switch+'px')
+      
+        // append vertical line groups 
+        vert_lines = clust_group
+          .selectAll('.vert_lines')
+          .data(col_nodes)
+          .enter()
+          .append('g')
+          .attr('class','vert_lines')
+          .attr('transform', function(d,i){ return 'translate(' + x_scale(i) + ') rotate(-90)'; })
+      
+        // add vertical lines 
+        vert_lines
+          .append('line')
+          .attr('x1',0)
+          .attr('x2',-20*viz_height)
+          .style('stroke-width', border_width+'px')
+      
+      
+        // row labels 
+        //////////////////////////////////
+      
+        // white background rect for row labels
+        d3.select('#main_svg')
+          .append('rect')
+          .attr('fill', 'white')
+          .attr('width', row_label_width+'px')
+          .attr('height', '750px')
+          .attr('class','white_bars');
+      
+        // append group for row labels 
+        d3.select('#main_svg')
+          .append("g")
+          .attr('id', 'row_labels')
+          .attr("transform", "translate(" + row_margin.left + "," + row_margin.top + ")")
+      
+        // generate and position the row labels
+        var row_label_obj = d3.select('#row_labels')
+          .selectAll('.row_label_text')
+          .data(row_nodes)
+          .enter()
+          .append('g')
+          .attr('class','row_label_text')
+          .attr('transform', function(d, i) { return "translate(0," + y_scale(i) + ")"; })
+          .on('click', reorder_click_row )
+          .on('mouseover', function(){
+            // highlight text
+            d3.select(this).select('text')
+              .style('font-weight','bold');
+          })
+          .on("mouseout", function mouseout() {
+            d3.select(this).select('text')
+              .style('font-weight','normal');
+            // reset highlighted col 
+            d3.select('#clicked_row')
+              .style('font-weight','bold');
+          });
+      
+        // append row label text 
+        row_label_obj
+          .append('text')
+          // !! this will be fixed once I have separate x and y scales 
+          // !! can be improved 
+          .attr('y', y_scale.rangeBand()/2 )
+          .attr('dy', y_scale.rangeBand()/4)
+          .attr('text-anchor','end')
+          .style('font-size',default_fs_row+'px')
+          .text(function(d, i) { return d.name; } )
+      
+        // append rectangle behind text 
+        row_label_obj
+          .insert('rect','text')
+          .attr('x',-10)
+          .attr('y',0)
+          .attr('width',10)
+          .attr('height',10)
+          .style('opacity',0);
+      
+        // change the size of the highlighting rects 
+        row_label_obj
+          .each(function(){
+            // get the bounding box of the row label text 
+            var bbox = d3.select(this)
+                         .select('text')[0][0]
+                         .getBBox();
+      
+            // use the bounding box to set the size of the rect 
+            d3.select(this)
+              .select('rect')
+            .attr('x', bbox.x*0.5)
+            .attr('y', 0)
+            .attr('width', bbox.width*0.5)
+            .attr('height', y_scale.rangeBand())
+            .style('fill','yellow')
+            .style('opacity',0);
+          });
+      
+        // col labels 
+        //////////////////////////////////
+      
+        // white background rect for col labels 
+        d3.select('#main_svg')
+          .append('rect')
+          .attr('fill', 'white')
+          .attr('height', col_label_width+'px')
+          .attr('width', '750px')
+          .attr('class','white_bars');
+      
+        // append group for column labels 
+        d3.select('#main_svg')
+          .append("g")
+          .attr('id', 'col_labels')
+          .attr("transform", "translate(" + col_margin.left + "," + col_margin.top + ")");
+      
+        // offset click group column label 
+        x_offset_click = x_scale.rangeBand()/2 + border_width
+        // reduce width of rotated rects
+        reduce_rect_width = x_scale.rangeBand()* 0.36 
+      
+        // add main column label group 
+        col_label_obj = d3.select('#col_labels')
+          .selectAll(".col_label_text")
+          .data(col_nodes)
+          .enter()
+          .append("g")
+          .attr("class", "col_label_text")
+          .attr("transform", function(d, i) { return "translate(" + x_scale(i) + ") rotate(-90)"; })
+      
+        // append group for individual column label 
+        col_label_click = col_label_obj
+          // append new group for rect and label (not white lines)
+          .append('g')
+          .attr('class','col_label_click')
+          // rotate column labels 
+          .attr('transform', 'translate('+x_scale.rangeBand()/2+','+ x_offset_click +') rotate(45)')
+          .on('click', reorder_click_col )
+          .on('mouseover', function(){
+            // highlight text
+          
+            d3.select(this).select('text')
+              .style('font-weight','bold');
+          })
+          .on("mouseout", function mouseout() {
+            // d3.selectAll("text").classed("active", false);
+            d3.select(this).select('text')
+              .style('font-weight','normal');
+            // reset highlighted col 
+            d3.select('#clicked_col')
+              .style('font-weight','bold');
+          });
+      
+        // add column label 
+        col_label_click
+          .append("text")
+          .attr("x", 0)
+          .attr("y", x_scale.rangeBand() / 2)
+          .attr('dx',2*border_width)
+          // .attr("dy", ".32em")
+          .attr("text-anchor", "start")
+          .attr('full_name',function(d) { return d.name } )
+          .style('font-size',default_fs_col+'px')
+          // remove underscores from name 
+          .text(function(d, i) { return d.name.replace(/_/g, ' ') ; });
+      
+        // append rectangle behind text 
+        col_label_click
+          .insert('rect','text')
+          .attr('x',10)
+          .attr('y',0)
+          .attr('width',10)
+          .attr('height',10)
+          .style('opacity',0);
+      
+        // change the size of the highlighting rects
+        col_label_click
+          .each(function(){
+      
+            // get the bounding box of the row label text 
+            var bbox = d3.select(this)
+                         .select('text')[0][0]
+                         .getBBox();
+      
+            // use the bounding box to set the size of the rect 
+            d3.select(this)
+              .select('rect')
+            .attr('x', bbox.x*1.25)
+            .attr('y', 0)
+            .attr('width', bbox.width*1.25)
+            // used teh reduced rect width for the columsn 
+            // reduced because thee rects are slanted
+            .attr('height', x_scale.rangeBand()*0.6)
+            // .attr('height', reduce_rect_width)
+            .style('fill','yellow')
+            .style('opacity',0);
+          });
+      
+      
+        // add triangle under rotated labels
+        col_label_click
+          .append('path')
+          .style('stroke-width',0)
+          .attr('d', function(d) { 
+              // x and y are flipped since its rotated 
+              origin_y = - border_width
+              start_x  = 0;
+              final_x  =  x_scale.rangeBand() - reduce_rect_width ;
+              start_y  = -(x_scale.rangeBand() - reduce_rect_width + border_width) ;
+              final_y  =  -border_width;
+              output_string = 'M '+origin_y+',0 L ' + start_y + ',' + start_x + ', L ' + final_y + ','+final_x+' Z';
+              return output_string;
+             })
+          .attr('fill','#eee')
+          // change the colors of the triangles 
+          // .attr('fill', function(d) {
+          //   // look up color using data_group
+          //   inst_color = res_color_dict[d.name];
+          //   return inst_color;
+          // });
+      
+      
+        // Rects to hide spillover 
+        ///////////////////////////////
+      
+        // white rect to cover excess labels 
+        d3.select('#main_svg')
+          .append('rect')
+          .attr('fill', 'white')
+          .attr('width',  row_label_width+'px')
+          .attr('height', col_label_width+'px')
+          .attr('id','top_left_white');
+      
+      
+        // hide spillover from right
+        d3.select('#main_svg')
+          .append('rect')
+          .attr('fill', 'white')
+          .attr('width', '200px')
+          .attr('height', '750px')
+          .attr('transform', function() { 
+            tmp_left = margin.left + svg_width;
+            // compensate for margin
+            tmp_top = margin.top - 5;
+            return 'translate('+tmp_left+','+tmp_top+')'
+          })
+          .attr('class','white_bars');
+      
+        // hide spillover from slanged column labels
+        d3.select('#main_svg')
+          .append('path')
+          .style('stroke-width','0')
+          // mini-language for drawing path in d3, used to draw triangle 
+          .attr('d', 'M 0,0 L 500,-500, L 500,0 Z')
+          .attr('fill','white')
+          .attr('id','slant_traingle')
+          .attr('transform', function(){
+            tmp_left = (margin.left + svg_width );
+            tmp_top = col_label_width ; 
+            return 'translate('+tmp_left+','+tmp_top+')' 
+          })
+      
+      
+        // initialize zoom and translate 
+        ///////////////////////////////////
+      
+        // initialize translate vector to compensate for label margins 
+        zoom.translate([ margin.left, margin.top]);
+      
+        // resize window 
+        d3.select(window).on('resize', timeout_resize); 
+      
+        // disable double-click zoom: double click should reset zoom level 
+        // do this for all svg elements 
+        d3.selectAll("svg").on("dblclick.zoom", null);    
+      
+        // double click to reset zoom - add transition 
+        d3.select('#main_svg')
+          // for some reason, do not put brackets in these functions 
+          .on('dblclick', function(){
+            // apply the following two translate zoom to reset zoom 
+            // programatically 
+            two_translate_zoom(0,0,1)
+          } );
+      };
+      
+      // row function 
+      function row_function(row_data) {
+        var colors = d3.scale.linear().domain([0, 0.7,1.4]).range(["#003366", '#6699CC', '#FF0033'])
+        // generate tiles in the current row 
+        cell =  d3.select(this)
+          // data join 
+          .selectAll(".cell")
+          .data( row_data )
+          .enter()
+          .append("rect")
+          .attr('class', 'cell')
+          .attr("x", function(d) { return x_scale(d.pos_x); })
+          .attr("width", x_scale.rangeBand())
+          .attr("height", y_scale.rangeBand())
+          .style("fill-opacity", function(d) { 
+            // calculate output opacity using the opacity scale 
+            output_opacity = opacity_scale( Math.abs(d.value) );
+            return output_opacity ; 
+          }) 
+          // switch the color based on up/dn enrichment 
+          .style('fill', function(d) { 
+           
+            //return d.value > 0 ? '#FF0000': '#FFFFFF' ;
+             return colors(d.value);
+          } )
+          .on("mouseover", function(p) {
+            d3.selectAll(".row_label_text text").classed("active", function(d, i) { return i == p.pos_y; });
+            d3.selectAll(".col_label_text text").classed("active", function(d, i) { return i == p.pos_x; });
+          })
+          .on("mouseout", function mouseout() {
+            d3.selectAll("text").classed("active", false);
+          })
+          .on("click", function (){
+            console.log("click")
+            
+          })
+      };
+      
+      function reorder_clust_rank(order_type) {
+      
+        // load orders 
+        if ( order_type == 'clust' ){ 
+          // order by enrichment 
+          x_scale.domain(orders.clust_row);
+          y_scale.domain(orders.clust_col);
+        }
+        else if (order_type == 'rank'){
+          // order by enrichment 
+          x_scale.domain(orders.rank_row);
+          y_scale.domain(orders.rank_col);
+        };
+      
+        // define the t variable as the transition function 
+        var t = clust_group.transition().duration(2500);
+      
+        // reorder matrix
+        t.selectAll(".row")
+          .attr("transform", function(d, i) { return "translate(0," + y_scale(i) + ")"; })
+          .selectAll(".cell")
+          .attr('x', function(d){ 
+            return x_scale(d.pos_x);
+          })
+      
+        // Move Row Labels
+        d3.select('#row_labels').selectAll('.row_label_text')
+          .transition().duration(2500)
+          .attr('transform', function(d, i) { return 'translate(0,' + y_scale(i) + ')'; });
+      
+        // t.selectAll(".column")
+        d3.select('#col_labels').selectAll(".col_label_text")
+          .transition().duration(2500)
+          .attr("transform", function(d, i) { 
+            return "translate(" + x_scale(i) + ")rotate(-90)"; 
+          });
+      };
+      
+      // initialize clustergram: size, scales, etc. 
+      function initialize_clustergram(network_data){
+        
+        // move network_data information into global variables 
+        col_nodes  = network_data.col_nodes ;
+        row_nodes  = network_data.row_nodes ;
+        inst_links = network_data.links; 
+      
+        // define screen limits
+        min_screen_width = 800;
+        max_screen_width = 2500;
+      
+        // define screen limits
+        min_viz_width = 400;
+        max_viz_width = 2000;
+        min_viz_height = 600;
+        max_viz_height = 1500;
+      
+        // initialize visualization size
+        set_visualization_size();
+      
+        // font size controls 
+        // scale default font size: input domain is the number of nodes
+        min_node_num = 10;
+        max_node_num = 2000;
+      
+        // // scale col and row font size 
+        // ///////////////////////////////
+        // // max and min font sizes 
+        // min_fs = 0.01 * scale_fs_screen(screen_width);
+        // max_fs = 15 * scale_fs_screen(screen_width);
+      
+        // scale only col font size 
+        ///////////////////////////////
+        // max and min font sizes 
+        min_fs = 0.05;
+        max_fs = 15;
+      
+        // output range is the font size 
+        scale_font_size = d3.scale.log().domain([min_node_num,max_node_num]).range([max_fs,min_fs]).clamp('true');
+      
+        // controls how much the font size is increased by zooming when the number of nodes is at its max
+        // and zooming is required 
+        // 1: do not increase font size while zooming
+        // 0: increase font size while zooming
+        // allow some increase in font size when zooming
+        min_fs_zoom = 0.95;
+        // allow full increase in font size when zooming
+        max_fs_zoom = 0.0; 
+        // define the scaling for the reduce font size factor 
+        scale_reduce_font_size_factor = d3.scale.log().domain([min_node_num,max_node_num]).range([min_fs_zoom,max_fs_zoom]).clamp('true');
+        // // define the scaling for the zoomability of the adjacency matrix
+        // scale_zoom  = d3.scale.log().domain([min_node_num,max_node_num]).range([2,17]).clamp('true');
+      
+        // define screen width font size scale 
+        // having a small screen width should reduce the font size of the columns 
+        // this will be compensated by increasing the available real zoom 
+        scale_fs_screen_width = d3.scale.linear().domain( [min_viz_width,max_viz_width]).range([0.75,1.15]).clamp('true');
+        scale_fs_screen_height = d3.scale.linear().domain([min_viz_width,max_viz_width]).range([0.75,1.15]).clamp('true');
+      
+        // the default font sizes are set here 
+        default_fs_row = scale_font_size(row_nodes.length)* scale_fs_screen_height(viz_height); 
+        // the colum font size is scaled by the width 
+        default_fs_col = scale_font_size(col_nodes.length)* scale_fs_screen_width(viz_width); 
+      
+        // correct for forcing the tiles to be squares - if they are forced, then use the col font size scaling on the rows 
+        if (force_square == 1){
+          // scale the row font size by the col scaling  
+          default_fs_row = default_fs_col;
+        };
+      
+        // calculate the reduce font-size factor: 0 for no reduction in font size and 1 for full reduction of font size
+        reduce_font_size_factor_row = scale_reduce_font_size_factor(row_nodes.length);
+        reduce_font_size_factor_col = scale_reduce_font_size_factor(col_nodes.length);
+      
+        // set up the real zoom (2d zoom) as a function of the number of col_nodes
+        // since these are the nodes that are zoomed into in 2d zooming 
+        real_zoom_scale_col = d3.scale.linear().domain([min_node_num,max_node_num]).range([2,5]).clamp('true');
+        // scale the zoom based on the screen size
+        // smaller screens can zoom in more, compensates for reduced font size with small screen 
+        real_zoom_scale_screen = d3.scale.linear().domain([min_screen_width,max_screen_width]).range([2,1]).clamp('true');
+        // calculate the zoom factor - the more nodes the more zooming allowed
+        real_zoom = real_zoom_scale_col(col_nodes.length)*real_zoom_scale_screen(screen_width);
+      
+        // set opacity scale 
+        max_link = _.max( inst_links, function(d){ return Math.abs(d.value) } )
+        opacity_scale = d3.scale.linear().domain([0, Math.abs(max_link.value) ]).clamp(true).range([0.0,1.0]) ; 
+      };
+      
+      function set_visualization_size(){
+      
+        // find the label with the most characters and use it to adjust the row and col margins 
+        row_max_char = _.max(row_nodes, function(inst) {return inst.name.length;}).name.length;
+        col_max_char = _.max(col_nodes, function(inst) {return inst.name.length;}).name.length;
+      
+        // define label scale parameters: the more characters in the longest name, the larger the margin 
+        min_num_char = 5;
+        max_num_char = 40;
+        min_label_width = 60;
+        max_label_width = 200;
+        label_scale = d3.scale.linear().domain([min_num_char,max_num_char]).range([min_label_width,max_label_width]).clamp('true');
+      
+        // set col_label_width and row_label_width
+        row_label_width = label_scale(row_max_char) ;
+        triangle_space = 30;
+        col_label_width = label_scale(col_max_char) + triangle_space ;
+      
+        // distance between labels and clustergram
+        label_margin = 5;
+      
+        // Margins 
+        col_margin = { top:col_label_width - label_margin, right:0, bottom:0, left:row_label_width              };
+        row_margin = { top:col_label_width,                right:0, bottom:0, left:row_label_width-label_margin };
+        margin     = { top:col_label_width,                right:0, bottom:0, left:row_label_width              };
+      
+        // from http://stackoverflow.com/questions/16265123/resize-svg-when-window-is-resized-in-d3-js
+        x_window = window.innerWidth;
+        y_window = window.innerHeight;
+      
+        // set wrapper width and height
+        d3.select('#wrapper').style('width', x_window/0.65+"px");
+        d3.select('#wrapper').style('height', y_window);
+      
+        // initalize clutergram container 
+        // 
+        // get screen width 
+        screen_width  = Number(d3.select('#wrapper').style('width').replace('px',''));
+        // get screen height
+        screen_height = Number(d3.select('#wrapper').style('height').replace('px',''));
+      
+        // define offsets for permanent row and col margins 
+        // takes into consideration sidebar
+        // reducing sidebar width, row_offset used to be 280 when left margin was 260
+        // now, rowoffset is 240 when left margin is reduced to 220 (-40px)
+        // further reducing width of from 220 to 210px - left margin will be 230px
+        container_row_offset = 230;
+        // takes into consideration footer and header margin
+        container_col_offset = 50;
+      
+        // adjust container with border
+        // define width and height of clustergram container 
+        width_clust_container  = screen_width - container_row_offset;
+        height_clust_container = screen_height - container_col_offset;
+      
+      
+        // Clustergram Container 
+        ///////////////////////////////
+        // set clustergram_container and clust_and_row_container dimensions 
+        // clustergram_container
+        d3.select('#clustergram_container').style('width', width_clust_container+'px')
+        d3.select('#clustergram_container').style('height', height_clust_container+'px')
+        // clust_and_row_container
+        d3.select('#clust_and_row_container').style('width',width_clust_container+'px')
+        d3.select('#clust_and_row_container').style('height',height_clust_container+'px')
+      
+        // SVG 
+        ////////////////
+        // define offset for svg
+        // compenstates for permanent row and column labels as well
+        // as x spillover 
+        spillover_x_offset = label_scale(col_max_char)* 0.8 ;
+        svg_x_offset = 50 + spillover_x_offset;
+        svg_y_offset = 50;
+      
+        // svg size: less than container size 
+        // subtract fixed length for permanent col and row labels and variable length for specific col and row labels 
+        svg_width  = width_clust_container  - svg_x_offset - row_label_width ;
+        svg_height = height_clust_container - svg_y_offset - col_label_width ;
+      
+        // define a visualization size, which may be smaller than the svg size if
+        // there are a small number of rows 
+        // or if there are more columns than rows 
+        //////////////////////////////////////////////////
+      
+        // viz_width
+        ////////////////////////
+        // set up a scale that will prevent the visualization
+        // from stretching a few rows across the entire width 
+        prevent_col_stetch = d3.scale.linear().domain([1,20]).range([0.05,1]).clamp('true');
+      
+        viz_width = svg_width * prevent_col_stetch(col_nodes.length) ; 
+      
+        // viz_height 
+        ////////////////
+        // ensure that width of rects is not less than height 
+        if (col_nodes.length > row_nodes.length){
+          // scale the height 
+          viz_height = svg_width*(row_nodes.length/col_nodes.length);
+      
+          // keep track of whether or not a force square has occurred 
+          // so that I can adjust the font accordingly 
+          // here it has
+          force_square = 1;
+      
+          // make sure that this scaling does not cause the viz to be taller 
+          // than the svg 
+          if (viz_height > svg_height){
+            // make the height equal to the width, to force square tiles - rather than thin tiles that 
+            // are taller than they are wide 
+            viz_height = svg_height;
+      
+            // keep track of whether or not a force square has occurred 
+            // here it has not
+            force_square = 0;
+          };
+        }
+        // use the unaltered height 
+        else{
+          // the height will be calculated normally - leading to wide tiles 
+          viz_height = svg_height;
+      
+          // keep track of whether or not a force square has occurred 
+          // here it has not
+          force_square = 0;
+        };
+      
+        // scaling functions used to position tiles 
+        x_scale = d3.scale.ordinal().rangeBands([0, viz_width]) ;
+        y_scale = d3.scale.ordinal().rangeBands([0, viz_height]); 
+      
+        // Sort rows and columns 
+        orders = {
+          name:     d3.range(col_nodes.length).sort(function(a, b) { return d3.ascending( col_nodes[a].name, col_nodes[b].name); }),
+          // rank 
+          rank_row: d3.range(col_nodes.length).sort(function(a, b) { return col_nodes[b].rank  - col_nodes[a].rank; }),
+          rank_col: d3.range(row_nodes.length).sort(function(a, b) { return row_nodes[b].rank  - row_nodes[a].rank; }),
+          // clustered 
+          // the clust order is stored under sort !! 
+          clust_row: d3.range(col_nodes.length).sort(function(a, b) { return col_nodes[b].sort  - col_nodes[a].sort; }),
+          clust_col: d3.range(row_nodes.length).sort(function(a, b) { return row_nodes[b].sort  - row_nodes[a].sort; })
+          
+        };
+
+        // Assign the default sort order for the columns 
+        x_scale.domain(orders.clust_row);
+        y_scale.domain(orders.clust_col);
+      
+        // define border width 
+        border_width = x_scale.rangeBand()/16.66;
+      
+        // define the zoom switch value - use viz_width and viz_height
+        // switch from 1 to 2d zoom 
+        zoom_switch = (viz_width/col_nodes.length)/(viz_height/row_nodes.length);
+      };
+      
+      // recalculate the size of the visualization
+      // and remake the clustergram 
+      function reset_visualization_size(){
+      
+        // recalculate the size 
+        set_visualization_size();
+      
+        // reset zoom and translate 
+        zoom.scale(1).translate([margin.left, margin.top]);
+      
+        // pass the network data to d3_clustergram 
+        make_d3_clustergram(global_network_data);
+        
+        // // turn off the wait sign 
+        // $.unblockUI();
+      };
+      
+      // define zoomed function 
+      function zoomed() {
+      
+        // gather transformation components 
+        /////////////////////////////////////
+        // gather zoom components 
+        zoom_x = d3.event.scale;
+        zoom_y = d3.event.scale;
+      
+        // gather translate vector components 
+        trans_x = d3.event.translate[0] - margin.left;
+        trans_y = d3.event.translate[1] - margin.top;
+        
+        // apply transformation: no transition duration when zooming with mouse 
+        apply_transformation(trans_x, trans_y, zoom_x, zoom_y, 0);
+      
+        // reset highlighted col 
+        d3.select('#clicked_col')
+          // .style('font-size',default_fs_col*1.25)
+          .style('font-weight','bold');
+      };
+      
+      // apply transformation 
+      function apply_transformation(trans_x, trans_y, zoom_x, zoom_y, duration){
+       
+        // define d3 scale 
+        d3_scale = zoom_x ; 
+      
+        // y - rules 
+        ///////////////////////////////////////////////////
+      
+        // available panning room in the y direction 
+        // multiple extra room (zoom - 1) by the width
+        // always defined in the same way 
+        pan_room_y = (d3_scale - 1) * svg_height ;
+      
+        // if the transformation is from a gene search, the remove pan_room_y restriction 
+        if (duration > 0){
+          // set pan_room_y to svg_height - removing restriction 
+          pan_room_y = svg_height;
+        };
+      
+        // do not translate if translate in y direction is positive 
+        if (trans_y >= 0 ) {
+          console.log('\nrestrict panning in the positive y direction')
+          console.log(trans_y)
+          // restrict transformation parameters 
+          // no panning in either direction 
+          trans_y = 0; 
+        }
+        // restrict y pan to pan_room_y if necessary 
+        else if (trans_y <= -pan_room_y) {
+          trans_y = -pan_room_y; 
+          console.log('\nrestrict y panning based on y panning ')
+        };
+      
+        // x - rules 
+        ///////////////////////////////////////////////////
+        // zoom in y direction only - translate in y only
+        if (d3_scale < zoom_switch) {
+          // no x translate or zoom 
+          trans_x = 0;
+          zoom_x = 1;
+      
+        }
+        // zoom in both directions 
+        // scale is greater than zoom_switch 
+        else{
+      
+          // available panning room in the x direction 
+          // multiple extra room (zoom - 1) by the width
+          pan_room_x = (d3_scale/zoom_switch - 1) * svg_width ;
+      
+          // no panning in the positive direction 
+          if (trans_x > 0){
+      
+            // restrict transformation parameters 
+            // no panning in the x direction 
+            trans_x = 0; 
+            // set zoom_x
+            zoom_x = d3_scale/zoom_switch;
+      
+          }
+          // restrict panning to pan_room_x 
+          else if (trans_x <= -pan_room_x){
+      
+            // restrict transformation parameters 
+            // no panning in the x direction 
+            trans_x = -pan_room_x; 
+            // set zoom_x 
+            zoom_x = d3_scale/zoom_switch;
+      
+          }
+          // allow two dimensional panning 
+          else{
+      
+            // restrict transformation parameters 
+            // set zoom_x 
+            zoom_x = d3_scale/zoom_switch;
+      
+          };
+      
+        };
+       
+        // apply transformation and reset translate vector 
+        // the zoom vector (zoom.scale) never gets reset 
+        ///////////////////////////////////////////////////
+        // translate clustergram 
+        clust_group
+          .attr('transform','translate(' + [ margin.left + trans_x, margin.top + trans_y ] + ') scale('+ zoom_x +',' + zoom_y + ')');
+      
+        // transform row labels 
+        d3.select('#row_labels')
+          .attr('transform','translate(' + [row_margin.left , margin.top + trans_y] + ') scale(' + zoom_y + ')');
+      
+        // transform col labels
+        // move down col labels as zooming occurs, subtract trans_x - 20 almost works 
+        d3.select('#col_labels')
+          .attr('transform','translate(' + [col_margin.left + trans_x , col_margin.top] + ') scale(' + zoom_x + ')');
+      
+        // reset translate vector - add back margins to trans_x and trans_y  
+        zoom
+          .translate([ trans_x +  margin.left, trans_y + margin.top]);
+      
+        // Font Sizes 
+        //////////////////
+        // reduce the font size by dividing by some part of the zoom 
+        // if reduce_font_size_factor_ is 1, then the font will be divided by the whole zoom - and the labels will not increase in size 
+        // if reduce_font_size_factor_ is 0, then the font will be divided 1 - and the labels will increase cuction of the font size 
+        reduce_font_size = d3.scale.linear().domain([0,1]).range([1,zoom_y]).clamp('true');
+        // scale down the font to compensate for zooming 
+        fin_font = default_fs_row/(reduce_font_size(reduce_font_size_factor_row)); 
+        // add back the 'px' to the font size 
+        fin_font = fin_font + 'px';
+        // change the font size of the labels 
+        d3.selectAll('.row_label_text')
+          .select('text')
+          .style('font-size', fin_font);
+      
+        // re-size of the highlighting rects 
+        d3.select('#row_labels')
+          .each(function(){
+            // get the bounding box of the row label text 
+            var bbox = d3.select(this)
+                         .select('text')[0][0]
+                         .getBBox();
+      
+            // use the bounding box to set the size of the rect 
+            d3.select(this)
+              .select('rect')
+            .attr('x', bbox.x*0.5)
+            .attr('y', 0)
+            .attr('width', bbox.width*0.5)
+            .attr('height', y_scale.rangeBand())
+            .style('fill','yellow');
+          });
+      
+      
+        // reduce font-size to compensate for zoom 
+        // calculate the recuction of the font size 
+        reduce_font_size = d3.scale.linear().domain([0,1]).range([1,zoom_x]).clamp('true');
+        // scale down the font to compensate for zooming 
+        fin_font = default_fs_col/(reduce_font_size(reduce_font_size_factor_col)); 
+        // add back the 'px' to the font size 
+        fin_font = fin_font + 'px';
+        // change the font size of the labels 
+        d3.selectAll('.col_label_text')
+          .select('text')
+          .style('font-size', fin_font);
+      
+        // change the size of the highlighting rects
+        // col_label_click
+        d3.select('#col_labels')
+          .each(function(){
+      
+            // get the bounding box of the row label text 
+            var bbox = d3.select(this)
+                         .select('text')[0][0]
+                         .getBBox();
+      
+            // use the bounding box to set the size of the rect 
+            d3.select(this)
+              .select('rect')
+            .attr('x', bbox.x*1.25)
+            .attr('y', 0)
+            .attr('width', bbox.width * 1.25)
+            // used teh reduced rect width for the columsn 
+            // reduced because thee rects are slanted
+            .attr('height', x_scale.rangeBand()*0.6)
+            .style('fill','yellow')
+            .style('opacity',0);
+          });
+      
+      };
+      
+      // reorder columns with row click 
+      function reorder_click_row(d,i){
+      
+        // get inst row (gene)
+        inst_gene = d3.select(this).select('text').text();
+      
+        // highlight clicked column 
+        // first un-highlight all others 
+        d3.selectAll('.rol_label_text').select('text')
+          .style('font-weight','normal');
+        // remove previous id 
+        d3.select('#clicked_row')
+          .attr('id','');
+      
+        // highlight current 
+        d3.select(this).select('text')
+          .style('font-weight','bold')
+          .attr('id','clicked_row');
+      
+        // find the row number of this term from row_nodes 
+        // gather row node names 
+        tmp_arr = []
+        for (i=0; i<row_nodes.length; i++){
+          tmp_arr.push(row_nodes[i].name);
+        }
+      
+        // find index 
+        inst_row = _.indexOf( tmp_arr, inst_gene );
+      
+        // gather the values of the input genes 
+        tmp_arr = [];
+        for (j=0; j<col_nodes.length; j++) {
+          tmp_arr.push(matrix[inst_row][j].value);
+        }
+      
+        // sort the rows 
+        tmp_sort = d3.range( tmp_arr.length ).sort(function(a, b) { return tmp_arr[b]  - tmp_arr[a]; })
+      
+        // resort the columns (resort x)
+        x_scale.domain(tmp_sort);
+      
+        // reorder
+        ////////////////////
+      
+        // define the t variable as the transition function 
+        var t = clust_group.transition().duration(1000);
+      
+        // reorder matrix
+        t.selectAll(".cell")
+          .attr('x', function(d){ 
+          return x_scale(d.pos_x);
+        });
+      
+        // Move Row Labels
+        d3.select('#col_labels').selectAll(".col_label_text")
+          .transition().duration(2500)
+          .attr("transform", function(d, i) { 
+            return "translate(" + x_scale(i) + ")rotate(-90)"; 
+          });
+      
+        // // zoom into and highlight selected row 
+        // zoom_and_highlight_found_gene(inst_gene);
+      
+      };
+      
+      // reorder rows with column click 
+      function reorder_click_col(d,i){
+      
+        // get inst col (term)
+        inst_term = d3.select(this).select('text').attr('full_name')
+      
+        // highlight clicked column 
+        // first un-highlight all others 
+        d3.selectAll('.col_label_text').select('text')
+          .style('font-weight','normal');
+        // remove previous id 
+        d3.select('#clicked_col')
+          .attr('id','');
+      
+        // highlight current 
+        d3.select(this).select('text')
+          .style('font-weight','bold')
+          .attr('id','clicked_col');
+      
+        // find the column number of this term from col_nodes 
+        // gather column node names 
+        tmp_arr = []
+        for (i=0; i<col_nodes.length; i++){
+          tmp_arr.push(col_nodes[i].name);
+        };
+      
+        // find index 
+        inst_col = _.indexOf( tmp_arr, inst_term );
+      
+        // gather the values of the input genes 
+        tmp_arr = [];
+        for (i=0; i<row_nodes.length; i++) {
+          tmp_arr.push(matrix[i][inst_col].value);
+        };
+      
+        // sort the rows 
+        tmp_sort = d3.range( tmp_arr.length).sort(function(a, b) { return tmp_arr[b]  - tmp_arr[a]; })
+      
+        // resort rows - y axis 
+        y_scale.domain(tmp_sort);
+      
+        // reorder
+        // define the t variable as the transition function 
+        var t = clust_group.transition().duration(2500);
+      
+        // reorder matrix
+        t.selectAll(".row")
+          .attr("transform", function(d, i) { return "translate(0," + y_scale(i) + ")"; })
+          .selectAll(".cell")
+          .attr('x', function(d){ 
+            return x_scale(d.pos_x);
+          })
+      
+        // Move Row Labels
+        // 
+        d3.select('#row_labels').selectAll('.row_label_text')
+          .transition().duration(2500)
+          .attr('transform', function(d, i) { return 'translate(0,' + y_scale(i) + ')'; });
+      
+        // t.selectAll(".column")
+        d3.select('#col_labels').selectAll(".col_label_text")
+          .transition().duration(2500)
+          .attr("transform", function(d, i) { 
+            return "translate(" + x_scale(i) + ")rotate(-90)"; 
+          });
+      
+        // highlight selected column 
+        ///////////////////////////////
+      
+        // unhilight and unbold all columns (already unbolded earlier)
+        d3.selectAll('.col_label_text')
+          .select('rect')
+          .style('opacity',0);
+      
+        // highlight column name
+        d3.select(this)
+          .select('rect')
+          .style('opacity',1);
+      
+      
+      };
+      
+      // resize clustergram with screensize change
+      var doit;
+      function timeout_resize(){
+      
+        // clear timeout
+        clearTimeout(doit);
+      
+        // // set up wait message before request is made 
+        // $.blockUI({ css: { 
+        //         border: 'none', 
+        //         padding: '15px', 
+        //         backgroundColor: '#000', 
+        //         '-webkit-border-radius': '10px', 
+        //         '-moz-border-radius': '10px', 
+        //         opacity: .8, 
+        //         color: '#fff' 
+        //     } });
+      
+        doit = setTimeout( reset_visualization_size, 500)  ;
+      
+      };
+      
+      
+      // interpolate pan and zoom
+      function interpolate_pan_zoom(pan_dx, pan_dy, fin_zoom){
+      };
+      
+      function two_translate_zoom(pan_dx, pan_dy, fin_zoom){
+      
+        console.log('two_translate_zoom')
+        console.log('pan_dx: '+String(pan_dx))
+        console.log('pan_dy: '+String(pan_dy))
+        console.log('fin_zoom: '+String(fin_zoom))
+      
+        // define the commonly used variable half_height
+        var half_height = viz_height/2 ;
+      
+        // y pan room, the pan room has to be less than half_height since 
+        // zooming in on a gene that is near the top of the clustergram also causes 
+        // panning out of the visible region  
+        var y_pan_room = ((half_height)/zoom_switch);
+      
+      
+        // prevent visualization from panning down too much 
+        // when zooming into genes near the top of the clustergram 
+        if (pan_dy >= half_height - y_pan_room){
+      
+          console.log('restricting pan down')
+      
+          // prevent the clustergram from panning down too much 
+          // if the amount of panning is equal to the half_height then it needs to be reduced
+          // effectively, the the visualization needs to be moved up (negative) by some factor
+          // of the half width of the visualization. If there was no zooming involved, then the
+          // visualization would be centered first, then panned to center the top term, then 
+          // the correction would re-center it. However, because of the zooming the offset is 
+          // reduced by the zoom factor (this is because the panning is occurring on something 
+          // that will be zoomed into - this is why the pan_dy value is not scaled in the two
+          // translate transformations, but it has to be scaled afterwards to set the translate
+          // vector)
+          // pan_dy = half_height - (half_height)/zoom_switch
+      
+          // if pan_dy is greater than the pan room, then panning has to be restricted
+          // start by shifting back up (negative) by half_height/zoom_switch then shift bak down
+          // by the difference between half_height and pan_dy (so that the top of the clustergram is 
+          // visible)
+          var shift_top_viz = half_height - pan_dy ;
+          var shift_up_viz  = - half_height/zoom_switch + shift_top_viz ; 
+      
+          // reduce pan_dy so that the visualization does not get panned to far down
+          pan_dy = pan_dy + shift_up_viz ;
+        };
+      
+        // prevent visualization from panning up too much
+        // when zooming into genes at the bottom of the clustergram 
+        if (pan_dy < -(half_height - y_pan_room) ){
+      
+          console.log('restricting pan up')
+          var shift_top_viz = half_height + pan_dy ;
+      
+          // does not seem to be needed 
+          /////////
+          // move up by one row height 
+          // var move_up_one_row = y_scale.rangeBand();
+          // // do not move up one row if the clustergram is square 
+          // if (zoom_switch == 1){
+          //   move_up_one_row = 0;
+          // };
+      
+          var shift_up_viz  =  half_height/zoom_switch - shift_top_viz; //- move_up_one_row;
+      
+          // reduce pan_dy so that the visualization does not get panned to far down
+          pan_dy = pan_dy + shift_up_viz ;
+      
+      
+        };
+      
+        // will improve this !!
+        zoom_y = fin_zoom; 
+        zoom_x = 1;
+      
+        // search duration - the duration of zooming and panning 
+        search_duration =700;
+      
+        // center_y
+        center_y = -(zoom_y -1)*half_height;
+      
+        // console.log('\ncenter_y\t'+center_y+'\n')
+        // console.log('\npan_dy\t'+pan_dy+'\n')
+      
+        // transform clsut group 
+        clust_group
+          .transition()
+          .duration(search_duration)
+          // first apply the margin transformation
+          // then zoom, then apply the final transformation 
+          .attr('transform', 'translate(' + [ margin.left,  margin.top + center_y ] + ')'+' scale('+ 1 +',' + zoom_y + ')'+'translate(' + [  pan_dx,  pan_dy ] + ')');
+      
+        // transform row labels 
+        d3.select('#row_labels')
+          .transition()
+          .duration(search_duration)
+          .attr('transform', 'translate(' + [ row_margin.left,  margin.top + center_y ] + ')'+' scale('+ zoom_y +',' + zoom_y + ')'+'translate(' + [  0,  pan_dy ] + ')');
+      
+        // transform col labels
+        // move down col labels as zooming occurs, subtract trans_x - 20 almost works 
+        d3.select('#col_labels')
+          .transition()
+          .duration(search_duration)
+          // .attr('transform','translate(' + [col_margin.left + pan_dx , col_margin.top] + ') scale(' + 1 + ')');
+          .attr('transform', 'translate(' + [ col_margin.left,  col_margin.top ] + ')'+' scale('+ 1 +',' + 1 + ')'+'translate(' + [  pan_dx,  0 ] + ')');
+      
+      
+        // Font Sizes 
+        //////////////////
+        // reduce font-size to compensate for zoom 
+        // calculate the recuction of the font size 
+        reduce_font_size = d3.scale.linear().domain([0,1]).range([1,zoom_y]).clamp('true');
+        // scale down the font to compensate for zooming 
+        fin_font = default_fs_row/(reduce_font_size(reduce_font_size_factor_row)); 
+        // add back the 'px' to the font size 
+        fin_font = fin_font + 'px';
+        // change the font size of the labels 
+        d3.selectAll('.row_label_text')
+          .transition()
+          .duration(search_duration)
+          .select('text')
+          .style('font-size', fin_font);
+      
+        // resize the highlighting bar when performing two transition zoom 
+        // re-size of the highlighting rects 
+        d3.select('#row_labels')
+          .each(function(){
+            // get the bounding box of the row label text 
+            var bbox = d3.select(this)
+                         .select('text')[0][0]
+                         .getBBox();
+      
+            // use the bounding box to set the size of the rect 
+            d3.select(this)
+              .select('rect')
+            .attr('x', bbox.x*0.5)
+            .attr('y', 0)
+            .attr('width', bbox.width*0.5)
+            .attr('height', y_scale.rangeBand())
+            .style('fill','yellow');
+          });
+      
+      
+      
+        // reduce font-size to compensate for zoom 
+        // calculate the recuction of the font size 
+        reduce_font_size = d3.scale.linear().domain([0,1]).range([1,zoom_x]).clamp('true');
+        // scale down the font to compensate for zooming 
+        fin_font = default_fs_col/(reduce_font_size(reduce_font_size_factor_col)); 
+        // add back the 'px' to the font size 
+        fin_font = fin_font + 'px';
+        // change the font size of the labels 
+        d3.selectAll('.col_label_text')
+          .transition()
+          .duration(search_duration)
+          .select('text')
+          .style('font-size', fin_font);
+      
+        // set y translate: center_y is positive, positive moves the visualization down 
+        // the translate vector has the initial margin, the first y centering, and pan_dy
+        // times the scaling zoom_y  
+        var net_y_offset = margin.top + center_y +  pan_dy * zoom_y  ;
+      
+        // reset the zoom translate and zoom 
+        zoom.scale(zoom_y);
+        zoom.translate([  pan_dx, net_y_offset])
+      
+      };
+      
+      // zoom into and highlight the found the gene 
+      function zoom_and_highlight_found_gene(search_gene){
+      
+        // unhighlight and unbold all genes 
+        d3.selectAll('.row_label_text')
+          .select('text')
+          .style('font-weight','normal');
+        d3.selectAll('.row_label_text')
+          .select('rect')
+          .style('opacity',0);
+      
+        // find the index of the gene 
+        inst_gene_index = _.indexOf( all_genes, search_gene );  
+      
+        // get y position 
+        inst_y_pos = y_scale(inst_gene_index)  ;
+      
+        // make row name bold 
+        d3.selectAll('.row_label_text')
+          .filter(function(d){ return d.name == search_gene})
+          .select('text')
+          .style('font-weight','bold');
+        // highlight row name 
+        d3.selectAll('.row_label_text')
+          .filter(function(d){ return d.name == search_gene})
+          .select('rect')
+          .style('opacity',1);
+      
+        // calculate the y panning required to center the found gene 
+        pan_dy = viz_height/2 - inst_y_pos;
+      
+        // use two translate method to control zooming 
+        // pan_x, pan_y, zoom 
+        two_translate_zoom(0, pan_dy, zoom_switch );
+      };
+      }
+</script>
+{% endblock %}
