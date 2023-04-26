@@ -51,20 +51,20 @@ def extract_ligands(path):
                                 
 
 # Main
-path = '/Users/song-inhyeok/CODING/short_test/PDB/'
+path = '/Users/song-inhyeok/Documents/PDB/'
 
 extract_ligands(path)
 
 
 
 
-root="/Users/song-inhyeok/CODING/short_test/PDB/ligand/"
+root="/Users/song-inhyeok/Documents/PDB/ligand/"
 
 from openbabel import openbabel
 import os, sys, copy
 from openbabel import pybel
 
-ligand_list = os.listdir("/Users/song-inhyeok/CODING/short_test/PDB/ligand")
+ligand_list = os.listdir("/Users/song-inhyeok/Documents/PDB/ligand/")
 
 obConversion = openbabel.OBConversion()
 obConversion.SetInAndOutFormats("pdb", "sdf")
@@ -77,7 +77,7 @@ for ligand in ligand_list:
     
     obConversion.ReadFile(mol, root+ligand) # Open Babel will uncompress automatically
     
-    mol.AddHydrogens()
+    #mol.AddHydrogens()
 
     obConversion.WriteFile(mol,root+name+".sdf")
 

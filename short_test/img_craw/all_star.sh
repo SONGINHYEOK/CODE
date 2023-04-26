@@ -1,0 +1,3 @@
+#!/bin/bash
+
+python3 /Users/song-inhyeok/Documents/coding/img_craw/1.py & python3 /Users/song-inhyeok/Documents/coding/img_craw/2.py & python3 /Users/song-inhyeok/Documents/coding/img_craw/3.py & python3 /Users/song-inhyeok/Documents/coding/img_craw/4.py & python3 /Users/song-inhyeok/Documents/coding/img_craw/5.py & python3 /Users/song-inhyeok/Documents/coding/img_craw/6.py & python3 /Users/song-inhyeok/Documents/coding/img_craw/7.py & python3 /Users/song-inhyeok/Documents/coding/img_craw/8.py
