@@ -1,26 +1,31 @@
 import multiprocessing
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from chembl_structure_pipeline import standardizer
+
 
 # Function to generate conformers for a molecule
 def generate_conformers(smiles, num_conformers, lock):
     mol = Chem.MolFromSmiles(smiles)
-    if mol is not None:
-        AllChem.EmbedMultipleConfs(mol, numConfs=num_conformers)
-        for conf_id in range(mol.GetNumConformers()):
-            AllChem.MMFFOptimizeMolecule(mol, confId=conf_id)
+    s = Chem.MolToMolBlock(mol)
+    std_molblock = standardizer.standardize_molblock(s)
+    std_mol = Chem.MolFromMolBlock(std_molblock, removeHs=False)
+    if std_mol is not None:
+        AllChem.EmbedMultipleConfs(std_mol, numConfs=num_conformers)
+        for conf_id in range(std_mol.GetNumConformers()):
+            AllChem.MMFFOptimizeMolecule(std_mol, confId=conf_id)
         
         with lock:
-            writer = Chem.SDWriter("conformers.sdf")
+            writer = Chem.SDWriter("/Users/song-inhyeog/CODEING/CODE/SMC_task/small_molecule_DB/molecule_perparation/confgen/conformers.sdf")
             
-            for conf in mol.GetConformers():
-                mol.SetProp('ID', f'{smiles}_{conf.GetId()}')
-                writer.write(mol, confId=conf.GetId())
+            for conf in std_mol.GetConformers():
+                std_mol.SetProp('ID', f'{smiles}_{conf.GetId()}')
+                writer.write(std_mol, confId=conf.GetId())
             writer.close()
 
 def main():
     num_conformers = 10  # Number of conformers to generate
-    num_processes = 4 #multiprocessing.cpu_count()  # Number of CPU cores
+    num_processes = 2 #multiprocessing.cpu_count()  # Number of CPU cores
 
     # Create a manager and a shared lock
     with multiprocessing.Manager() as manager:
