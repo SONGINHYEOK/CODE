@@ -1,12 +1,12 @@
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import AllChem
-import pubchempy as pcp
+from chembl_structure_pipeline import standardizer
 from multiprocessing import Pool
 
 def standardize_and_canonicalize_smiles(smiles):
-    compound = pcp.get_compounds(smiles, record_type='3d')[0]
-    standardized_smiles = compound.to_dict(properties=['canonical_smiles'])['canonical_smiles']
+    standardizer_result = standardizer.run(smiles)
+    standardized_smiles = standardizer_result.standardized_smiles
     
     mol = Chem.MolFromSmiles(standardized_smiles)
     canonical_smiles = Chem.MolToSmiles(mol, isomericSmiles=False, canonical=True)
