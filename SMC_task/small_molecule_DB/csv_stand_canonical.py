@@ -17,13 +17,13 @@ def process_row(row):
     canonical_smile, canonical_mol = standardize_and_canonicalize_smiles(row['smile'])
     
     # Set additional information as SD data
-    sd_data = {'Index': str(row.name), 'AnotherColumnValue': str(row['another_column'])}
+    sd_data = {'Index': str(row['Drug_ID']), 'target': str(row['Y'])}
     for key, value in sd_data.items():
         canonical_mol.SetProp(key, value)
     
-    return canonical_smile, canonical_mol
+    return {'Drug_ID': row['Drug_ID'], 'Y': row['Y'], 'canonical_smile': canonical_smile, 'canonical_mol': canonical_mol}
 
-def process_csv(input_file, output_sdf, num_processes=4):
+def process_csv(input_file, output_sdf, output_csv, num_processes=4):
     # Read CSV
     df = pd.read_csv(input_file)
 
@@ -33,18 +33,20 @@ def process_csv(input_file, output_sdf, num_processes=4):
 
     # Save all compounds in a single SDF file
     writer = Chem.SDWriter(output_sdf)
-    for smile, mol in results:
-        writer.write(mol)
+    for result in results:
+        canonical_mol = result['canonical_mol']
+        writer.write(canonical_mol)
     writer.close()
 
     # Update the 'smile' column with canonical SMILES
-    df['smile'] = [smile for smile, _ in results]
+    df['smile'] = [result['canonical_smile'] for result in results]
 
     # Save the updated dataframe to a new CSV file
-    df.to_csv("output_file.csv", index=False)
+    df.to_csv(output_csv, index=False, columns=['Drug_ID', 'Y', 'smile'])
 
 if __name__ == "__main__":
-    input_csv = "your_input_file.csv"
-    output_sdf = "output_file.sdf"
+    input_csv = "/Users/song-inhyeog/Downloads/caco2_total.csv"
+    output_sdf = "output_std.sdf"
+    output_csv = "output_std_file.csv"
     num_processes = 4  # Adjust the number of processes as needed
-    process_csv(input_csv, output_sdf, num_processes)
+    process_csv(input_csv, output_sdf, output_csv, num_processes)

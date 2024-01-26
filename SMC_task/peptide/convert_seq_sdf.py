@@ -5,9 +5,15 @@ from multiprocessing import Pool, freeze_support
 
 def process_sequence(sequence):
     mol = Chem.MolFromSequence(sequence)
+    
     if mol is not None:
+        # Add explicit hydrogen atoms to the molecule
+        mol = Chem.AddHs(mol)
+
+        # Perform other processing if needed (e.g., 2D coordinates, molecule embedding)
         AllChem.Compute2DCoords(mol)
         AllChem.EmbedMolecule(mol)
+        
         return mol
     else:
         print(f"Failed to generate molecule from sequence: {sequence}")
@@ -44,7 +50,7 @@ def csv_to_sdf(csv_file, output_sdf, peptide_column, num_processes=4):
 if __name__ == '__main__':
     freeze_support()  # Required for Windows support
     # Example usage:
-    csv_file_path = './sample.csv'
+    csv_file_path = '/Users/song-inhyeog/CODEING/CODE/test.csv'
     output_sdf_path = './output_conv_pep_molecules.sdf'
     peptide_column_name = 'Peptide Sequence'
     num_processes = 4  # Adjust the number of processes as needed
