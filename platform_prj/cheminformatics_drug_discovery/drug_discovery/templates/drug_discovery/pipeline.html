@@ -1,0 +1,186 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pipeline - Cheminformatics for Drug Discovery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        /* Form styles */
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-top: 10px;
+        }
+        input, select {
+            margin-bottom: 10px;
+            padding: 5px;
+        }
+        button[type="submit"] {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Cheminformatics for Drug Discovery</h1>
+    </header>
+    <nav>
+        <ul>
+            <li><a href="{% url 'index' %}">Home</a></li>
+            <li><a href="{% url 'pipeline' %}">Pipeline</a></li>
+            <li><a href="{% url 'dataset' %}">Dataset</a></li>
+            <li><a href="{% url 'qa' %}">Q&A</a></li>
+        </ul>
+    </nav>
+    <div class="container">
+        <h2>Our Drug Discovery Pipeline</h2>
+        <p>Discover how our integrated pipeline accelerates the drug discovery process.</p>
+        <div class="card">
+            <h3>Pipeline Stages</h3>
+            <ol>
+                <li>Target Identification</li>
+                <li>Hit Discovery</li>
+                <li>Lead Optimization</li>
+                <li>Preclinical Studies</li>
+                <li>Clinical Trials</li>
+            </ol>
+        </div>
+        <a href="#" class="btn" id="startProjectBtn">Start Your Project</a>
+    </div>
+
+    <!-- Modal -->
+    <div id="projectModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Create New Project</h2>
+            <form id="projectForm">
+                {% csrf_token %}
+                <label for="name">Project Name:</label>
+                <input type="text" id="name" name="name" required>
+                
+                <label for="target">PDB:</label>
+                <select id="target" name="target" required>
+                    <option value="">-- Select --</option>
+                    {% for target in targets %}
+                        <option value="{{ target.target_type }}">{{ target.target_type }}</option>
+                    {% endfor %}
+                </select>
+                
+                <label for="progress">Progress: <span id="progressValue">50</span>%</label>
+                <input type="range" id="progress" name="progress" min="0" max="100" value="50">
+                
+                <button type="submit">Create Project</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Get the modal
+        var modal = document.getElementById("projectModal");
+
+        // Get the button that opens the modal
+        var btn = document.getElementById("startProjectBtn");
+
+        // Get the <span> element that closes the modal
+        var span = document.getElementsByClassName("close")[0];
+
+        // When the user clicks the button, open the modal 
+        btn.onclick = function() {
+            modal.style.display = "block";
+        }
+
+        // When the user clicks on <span> (x), close the modal
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        // When the user clicks anywhere outside of the modal, close it
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        // Update progress value display
+        var progressInput = document.getElementById("progress");
+        var progressValue = document.getElementById("progressValue");
+        progressInput.oninput = function() {
+            progressValue.innerHTML = this.value;
+        }
+
+        // Handle form submission
+        document.getElementById("projectForm").onsubmit = function(e) {
+            e.preventDefault();
+            var formData = new FormData(this);
+
+            fetch("/home_modal/", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}"
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error("Error:", data.error);
+                    alert("An error occurred. Please try again.");
+                } else {
+                    alert("Project created successfully!");
+                    modal.style.display = "none";
+                    // You can add code here to update the UI or redirect the user
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("An error occurred. Please try again.");
+            });
+        }
+    </script>
+</body>
+</html>
