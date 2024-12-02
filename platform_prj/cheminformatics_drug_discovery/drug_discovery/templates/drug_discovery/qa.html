@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q&A - Cheminformatics for Drug Discovery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header>
+        <h1>Cheminformatics for Drug Discovery</h1>
+    </header>
+    <nav>
+        <ul>
+            <li><a href="{% url 'index' %}">Home</a></li>
+            <li><a href="{% url 'pipeline' %}">Pipeline</a></li>
+            <li><a href="{% url 'dataset' %}">Dataset</a></li>
+            <li><a href="{% url 'qa' %}">Q&A</a></li>
+        </ul>
+    </nav>
+    <div class="container">
+        <h2>Questions & Answers</h2>
+        <p>Get answers to your questions about cheminformatics and drug discovery.</p>
+        <div class="card">
+            <h3>Frequently Asked Questions</h3>
+            <ul>
+                <li>What is cheminformatics?</li>
+                <li>How does AI contribute to drug discovery?</li>
+                <li>What file formats are supported for molecular data?</li>
+                <li>How can I collaborate with other researchers on the platform?</li>
+            </ul>
+        </div>
+        <a href="#" class="btn">Ask a Question</a>
+    </div>
+</body>
+</html>
