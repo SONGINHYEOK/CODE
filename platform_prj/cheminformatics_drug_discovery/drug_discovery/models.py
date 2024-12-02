@@ -1,17 +1,17 @@
 from django.db import models
 from django.db.models import UniqueConstraint
 from django.core.validators import MinValueValidator, MaxValueValidator
-# from django.contrib.auth.models import User
 
 class Target(models.Model):
-    target_type = models.CharField(max_length=255, null=True, blank=True)
-    description = models.CharField(max_length=255, null=True, blank=True)
-
+    name = models.CharField(max_length=200, default="Default Target")
+    description = models.TextField(blank=True, default="")
+    pdb_id = models.CharField(max_length=50, blank=True)
+    
     class Meta:
         db_table = "target"
     
     def __str__(self):
-        return self.target_type
+        return self.name
 
 class Project(models.Model):
     name = models.CharField(max_length=255)
@@ -32,7 +32,7 @@ class Member(models.Model):
         db_table = "member"
 
     def __str__(self):
-        return self.name
+        return self.name or "No Name"
 
 class ProjectMember(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True, blank=True)
@@ -55,7 +55,7 @@ class Batch(models.Model):
         db_table = "batch"
     
     def __str__(self):
-        return self.name
+        return self.name or "No Name"
 
 class JobType(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -78,7 +78,7 @@ class Job(models.Model):
         db_table = "job"
     
     def __str__(self):
-        return f"Job in Batch: {self.batch.name or 'N/A'}, Type: {self.job_type.name or 'N/A'}, Operator: {self.operator.member.name if self.operator else 'N/A'}"
+        return f"Job {self.id} - {self.job_type.name if self.job_type else 'No Type'}"
 
 class JobEdge(models.Model):
     start = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="job_start_set", null=True, blank=True)
@@ -88,7 +88,7 @@ class JobEdge(models.Model):
         db_table = "job_edge"
 
     def __str__(self):
-        return f"JobEdge from {self.start} to {self.end}"
+        return f"JobEdge from {self.start.id} to {self.end.id}"
 
 class Bioassay(models.Model):
     name = models.CharField(max_length=255, null=True, blank=True)
@@ -100,17 +100,17 @@ class Bioassay(models.Model):
         db_table = "bioassay"
     
     def __str__(self):
-        return self.name
+        return self.name or "No Name"
 
 class Gene(models.Model):
-    gene_name = models.CharField(max_length=255, null=True, blank=True, unique=True)
+    gene_name = models.CharField(max_length=255, unique=True, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
 
     class Meta:
         db_table = "gene"
     
     def __str__(self):
-        return self.gene_name
+        return self.gene_name or "No Name"
 
 class GeneXref(models.Model):
     gene = models.ForeignKey(Gene, on_delete=models.CASCADE, null=True, blank=True)
@@ -123,22 +123,22 @@ class GeneXref(models.Model):
             models.Index(fields=['gene'])
         ]
         constraints = [
-            models.UniqueConstraint(fields=['gene', 'source_db', 'source_id'], name='unique_gene_source_constraint')
+            models.UniqueConstraint(fields=['gene', 'source_db', 'source_id'], 
+                                  name='unique_gene_source_constraint')
         ]
 
     def __str__(self):
-        return f"GeneXref in Gene: {self.gene.gene_name}, source_id: {self.source_id}"
-
+        return f"GeneXref {self.source_db}:{self.source_id}"
 
 class Pathway(models.Model):
-    internal_id = models.IntegerField(unique=True, blank=True)
-    accession = models.CharField(max_length=255, unique=True, blank=True)
+    internal_id = models.IntegerField(unique=True, null=True, blank=True)
+    accession = models.CharField(max_length=255, unique=True, null=True, blank=True)
 
     class Meta:
         db_table = "pathway"
     
     def __str__(self):
-        return f"internal_id: {self.internal_id}, accession: {self.accession}"
+        return f"Pathway {self.accession}"
 
 class TargetComment(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE, null=True, blank=True)
@@ -148,7 +148,7 @@ class TargetComment(models.Model):
         db_table = "target_comment"
     
     def __str__(self):
-        return self.comment
+        return self.comment or "No Comment"
 
 class TargetGene(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE, null=True, blank=True)
@@ -158,7 +158,7 @@ class TargetGene(models.Model):
         db_table = "target_gene"
     
     def __str__(self):
-        return self.gene.name
+        return f"TargetGene {self.target.id}:{self.gene.gene_name}"
 
 class TargetPathway(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE, null=True, blank=True)
@@ -168,7 +168,7 @@ class TargetPathway(models.Model):
         db_table = "target_pathway"
     
     def __str__(self):
-        return f"TargetPathway in Target: {self.target.target_type}, Pathway: {self.pathway.id}"
+        return f"TargetPathway {self.target.id}:{self.pathway.accession}"
 
 class TargetPublication(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE, null=True, blank=True)
@@ -178,10 +178,10 @@ class TargetPublication(models.Model):
         db_table = "target_publication"
     
     def __str__(self):
-        return self.pubmed_id
+        return str(self.pubmed_id)
 
 class Taxonomy(models.Model):
-    ncbi_taxonomy = models.IntegerField(blank=True, unique=True)
+    ncbi_taxonomy = models.IntegerField(unique=True, null=True, blank=True)
     scientific_name = models.CharField(max_length=255, null=True, blank=True)
     common_name = models.CharField(max_length=255, null=True, blank=True)
     synonyms = models.TextField(null=True, blank=True)
@@ -197,12 +197,79 @@ class Taxonomy(models.Model):
         ]
     
     def __str__(self):
-        return self.ncbi_taxonomy
+        return self.scientific_name or str(self.ncbi_taxonomy)
+
+class PDB(models.Model):
+    original_id = models.CharField(max_length=10, unique=True)
+
+    class Meta:
+        db_table = "pdb"
+    
+    def __str__(self):
+        return self.original_id
+
+class TargetPDB(models.Model):
+    target = models.ForeignKey(Target, on_delete=models.CASCADE)
+    pdb = models.ForeignKey(PDB, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "target_pdb"
+        constraints = [
+            UniqueConstraint(fields=['target', 'pdb'], name='unique_target_pdb')
+        ]
+
+    def __str__(self):
+        return f"TargetPDB {self.target.id}:{self.pdb.original_id}"
+
+class Ligand(models.Model):
+    pdb = models.ForeignKey(PDB, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        db_table = "ligand"
+    
+    def __str__(self):
+        return f"Ligand {self.id}"
+
+class Molecule(models.Model):
+    mol_3d = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = "molecule"
+
+    def __str__(self):
+        return f"Molecule {self.id}"
+
+class Compound(models.Model):
+    molecule = models.ForeignKey(Molecule, on_delete=models.SET_NULL, null=True, blank=True)
+    molecular_formula = models.CharField(max_length=255, null=True, blank=True)
+    molecular_weight = models.FloatField(null=True, blank=True)
+    canonical_smiles = models.CharField(max_length=255, null=True, blank=True)
+    isomeric_smiles = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        db_table = "compound"
+
+    def __str__(self):
+        return self.molecular_formula or f"Compound {self.id}"
+
+class PDBLigandCompound(models.Model):
+    ligand = models.ForeignKey(Ligand, on_delete=models.CASCADE)
+    compound = models.ForeignKey(Compound, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "pdbligand_compound"
+        constraints = [
+            UniqueConstraint(fields=['ligand', 'compound'], name='unique_ligand_compound')
+        ]
+
+    def __str__(self):
+        return f"PDBLigandCompound {self.ligand.id}:{self.compound.id}"
 
 class ProteinXref(models.Model):
-    ncbi_protein_accession = models.CharField(max_length=255, blank=True, unique=True)
+    ncbi_protein_accession = models.CharField(max_length=255, unique=True, null=True, blank=True)
     name = models.CharField(max_length=255, null=True, blank=True)
-    ncbi_taxonomy = models.ForeignKey(Taxonomy, null=True, blank=True, on_delete=models.SET_NULL, to_field="ncbi_taxonomy")
+    ncbi_taxonomy = models.ForeignKey(Taxonomy, null=True, blank=True, 
+                                    on_delete=models.SET_NULL, to_field="ncbi_taxonomy")
     sequence = models.TextField(null=True, blank=True)
     synonyms = models.TextField(null=True, blank=True)
 
@@ -224,48 +291,7 @@ class Protein(models.Model):
         db_table = "protein"
     
     def __str__(self):
-        return self.name
-
-class PDB(models.Model):
-    original_id = models.CharField(max_length=10, unique=True)
-
-    class Meta:
-        db_table = "pdb"
-    
-    def __str__(self):
-        return self.original_id
-
-class Ligand(models.Model):
-    pdb = models.ForeignKey(PDB, on_delete=models.SET_NULL, null=True, blank=True)
-
-    class Meta:
-        db_table = "ligand"
-    
-    def __str__(self):
-        return f"Ligand in PDB: {self.pdb.original_id}"
-
-class Molecule(models.Model):
-    mol_3d = models.TextField(null=True, blank=True)
-
-    class Meta:
-        db_table = "molecule"
-
-    def __str__(self):
-        return self.mol_3d
-
-class Compound(models.Model):
-    ligand = models.ForeignKey(Ligand, on_delete=models.SET_NULL, null=True, blank=True)
-    molecule = models.ForeignKey(Molecule, on_delete=models.SET_NULL, null=True, blank=True)
-    molecular_formula = models.CharField(max_length=255, null=True, blank=True)
-    molecular_weight = models.FloatField(null=True, blank=True)
-    canonical_smiles = models.CharField(max_length=255, null=True, blank=True)
-    isomeric_smiles = models.CharField(max_length=255, null=True, blank=True)
-
-    class Meta:
-        db_table = "compound"
-
-    def __str__(self):
-        return f"molecular_formula: {self.molecular_formula}"
+        return self.name or f"Protein {self.id}"
 
 class ProteinCompound(models.Model):
     protein = models.ForeignKey(Protein, on_delete=models.CASCADE, null=True, blank=True)
@@ -275,7 +301,7 @@ class ProteinCompound(models.Model):
         db_table = "protein_compound"
 
     def __str__(self):
-        return f"ProteinCompound in Protein: {self.protein.name}, Compound: {self.compound.molecular_formula}"
+        return f"ProteinCompound {self.protein.id}:{self.compound.id}"
 
 class BioassayResult(models.Model):
     bioassay = models.ForeignKey(Bioassay, on_delete=models.CASCADE, null=True, blank=True)
@@ -286,14 +312,15 @@ class BioassayResult(models.Model):
         db_table = "bioassay_result"
     
     def __str__(self):
-        return self.activity_outcome
+        return f"BioassayResult {self.id}: {self.activity_outcome}"
 
 class CellLine(models.Model):
-    internal_id = models.IntegerField(blank=True, unique=True)
+    internal_id = models.IntegerField(unique=True, null=True, blank=True)
     name = models.CharField(max_length=255, null=True, blank=True)
     tissue = models.CharField(max_length=255, null=True, blank=True)
     organism = models.CharField(max_length=255, null=True, blank=True)
-    ncbi_taxonomy = models.ForeignKey(Taxonomy, null=True, blank=True, on_delete=models.SET_NULL, to_field="ncbi_taxonomy")
+    ncbi_taxonomy = models.ForeignKey(Taxonomy, null=True, blank=True, 
+                                    on_delete=models.SET_NULL, to_field="ncbi_taxonomy")
     synonyms = models.TextField(null=True, blank=True)
 
     class Meta:
@@ -303,7 +330,7 @@ class CellLine(models.Model):
         ]
 
     def __str__(self):
-        return str(self.internal_id)
+        return self.name or str(self.internal_id)
 
 class Peptide(models.Model):
     sequence = models.CharField(max_length=255, null=True, blank=True)
@@ -312,7 +339,7 @@ class Peptide(models.Model):
         db_table = "peptide"
     
     def __str__(self):
-        return self.sequence
+        return self.sequence or f"Peptide {self.id}"
 
 class ProteinPeptide(models.Model):
     protein = models.ForeignKey(Protein, on_delete=models.CASCADE, null=True, blank=True)
@@ -322,7 +349,7 @@ class ProteinPeptide(models.Model):
         db_table = "protein_peptide"
     
     def __str__(self):
-        return f"ProteinPeptide in Protein: {self.protein.name}, Peptide: {self.peptide.sequence}"
+        return f"ProteinPeptide {self.protein.id}:{self.peptide.id}"
 
 class JobCompound(models.Model):
     job = models.ForeignKey(Job, on_delete=models.CASCADE, null=True, blank=True)
@@ -335,7 +362,7 @@ class JobCompound(models.Model):
         ]
     
     def __str__(self):
-        return f"JobCompound in Job id: {self.job.id}, Job type: {self.job.job_type}, Compound: {self.compound.canonical_smiles}"
+        return f"JobCompound {self.job.id}:{self.compound.id}"
 
 class JobPeptide(models.Model):
     job = models.ForeignKey(Job, on_delete=models.CASCADE, null=True, blank=True)
@@ -348,7 +375,7 @@ class JobPeptide(models.Model):
         ]
     
     def __str__(self):
-        return f"JobPeptide in Job id: {self.job.id}, Job type: {self.job.job_type}, Peptide: {self.peptide.sequence}" 
+        return f"JobPeptide {self.job.id}:{self.peptide.id}"
 
 class CompoundValueType(models.Model):
     type_id = models.CharField(max_length=50)
@@ -358,7 +385,7 @@ class CompoundValueType(models.Model):
         db_table = "compound_value_type"
     
     def __str__(self):
-        return f"CompoundValueType type: {self.type_id}, unit: {self.unit}"
+        return f"CompoundValueType {self.type_id}:{self.unit}"
 
 class PeptideValueType(models.Model):
     type_id = models.CharField(max_length=50)
@@ -368,7 +395,7 @@ class PeptideValueType(models.Model):
         db_table = "peptide_value_type"
     
     def __str__(self):
-        return f"PeptideValueType type: {self.type_id}, unit: {self.unit}"
+        return f"PeptideValueType {self.type_id}:{self.unit}"
     
 class ResultCompound(models.Model):
     job_compound = models.ForeignKey(JobCompound, on_delete=models.CASCADE, null=True, blank=True)
@@ -379,13 +406,14 @@ class ResultCompound(models.Model):
         db_table = "result_compound"
     
     def __str__(self):
-        return f"ResultCompound in JobCompound job: {self.job_compound.job}, compound: {self.job_compound.compound}"
+        return f"ResultCompound {self.job_compound.id}:{self.value}"
 
 class ResultPeptide(models.Model):
     job = models.ForeignKey(Job, on_delete=models.CASCADE, null=True, blank=True)
     peptide = models.ForeignKey(Peptide, on_delete=models.CASCADE, null=True, blank=True)
     value = models.FloatField()
     value_type = models.ForeignKey(PeptideValueType, on_delete=models.CASCADE, null=True, blank=True)
+    best_spot = models.IntegerField(null=True, blank=True)
 
     class Meta:
         db_table = "result_peptide"
@@ -394,7 +422,67 @@ class ResultPeptide(models.Model):
         ]
     
     def __str__(self):
-        return f"ResultPeptide in Job id: {self.job.id}, Peptide: {self.peptide.sequence}"
+        return f"ResultPeptide {self.job.id}:{self.peptide.id}:{self.value}"
+
+class AssayType(models.Model):
+    name = models.CharField(max_length=50)
+    unit = models.CharField(max_length=20)
+    description = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = "assay_type"
+        constraints = [
+            UniqueConstraint(fields=['name', 'unit'], name='unique_assay_type')
+        ]
+
+    def __str__(self):
+        return f"{self.name} ({self.unit})"
+
+class AssayResult(models.Model):
+    job = models.ForeignKey(Job, on_delete=models.CASCADE)
+    job_compound = models.ForeignKey(JobCompound, on_delete=models.CASCADE, null=True, blank=True)
+    assay_type = models.ForeignKey(AssayType, on_delete=models.CASCADE, null=True, blank=True)
+    value = models.FloatField()
+    raw_data = models.JSONField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "assay_result"
+        constraints = [
+            UniqueConstraint(
+                fields=['job_compound', 'assay_type'], 
+                name='unique_assay_result'
+            )
+        ]
+        indexes = [
+            models.Index(fields=['job'], name='idx_assay_result_job'),
+            models.Index(
+                fields=['job_compound', 'assay_type'], 
+                name='idx_job_compound_assay_type'
+            )
+        ]
+
+    def __str__(self):
+        return f"AssayResult {self.job.id}:{self.assay_type.name}:{self.value}"
+
+class AssayCondition(models.Model):
+    assay_result = models.ForeignKey(AssayResult, on_delete=models.CASCADE)
+    parameter = models.CharField(max_length=50)
+    value = models.CharField(max_length=50)
+    unit = models.CharField(max_length=20, null=True, blank=True)
+
+    class Meta:
+        db_table = "assay_condition"
+        constraints = [
+            UniqueConstraint(
+                fields=['assay_result', 'parameter'], 
+                name='unique_assay_condition'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.parameter}: {self.value}"
 
 class Physicochemical(models.Model):
     compound = models.OneToOneField(Compound, on_delete=models.CASCADE, primary_key=True)
@@ -411,8 +499,7 @@ class Physicochemical(models.Model):
         db_table = "physicochemical"
 
     def __str__(self):
-        return f"Lipinski: {self.lipinski}, TPSA: {self.tpsa}"
-
+        return f"Physicochemical for Compound {self.compound.id}"
 
 class Absorption(models.Model):
     compound = models.OneToOneField(Compound, on_delete=models.CASCADE, primary_key=True)
@@ -429,8 +516,7 @@ class Absorption(models.Model):
         db_table = "absorption"
     
     def __str__(self):
-        return f"HIA_Hou: {self.HIA_Hou}, Solubility_AqSolDB: {self.solubility_aqsol_db}"
-
+        return f"Absorption for Compound {self.compound.id}"
 
 class Distribution(models.Model):
     compound = models.OneToOneField(Compound, on_delete=models.CASCADE, primary_key=True)
@@ -442,8 +528,7 @@ class Distribution(models.Model):
         db_table = "distribution"
 
     def __str__(self):
-        return f"BBB_Martins: {self.bbb_martins}, VDss_Lombardo: {self.vdss_lombardo}"
-
+        return f"Distribution for Compound {self.compound.id}"
 
 class Excretion(models.Model):
     compound = models.OneToOneField(Compound, on_delete=models.CASCADE, primary_key=True)
@@ -455,8 +540,7 @@ class Excretion(models.Model):
         db_table = "excretion"
 
     def __str__(self):
-        return f"Half_Life_Obach: {self.half_life_obach}, Clearance_Hepatocyte_AZ: {self.clearance_hepatocyte_az}"
-
+        return f"Excretion for Compound {self.compound.id}"
 
 class Metabolism(models.Model):
     compound = models.OneToOneField(Compound, on_delete=models.CASCADE, primary_key=True)
@@ -473,8 +557,55 @@ class Metabolism(models.Model):
         db_table = "metabolism"
 
     def __str__(self):
-        return f"CYP1A2_Veith: {self.cyp1a2_veith}, CYP3A4_Veith: {self.cyp3a4_veith}"
+        return f"Metabolism for Compound {self.compound.id}"
 
+class AssayType(models.Model):
+    name = models.CharField(max_length=50)  # 예: IC50, EC50, Ki 등
+    unit = models.CharField(max_length=20)  # 예: nM, μM, % 등
+    description = models.TextField(null=True, blank=True)
+    class Meta:
+        db_table = "assay_type"
+        constraints = [
+            models.UniqueConstraint(fields=['name', 'unit'], name='unique_assay_type')
+        ]
+    def __str__(self):
+        return f"{self.name} ({self.unit})"
+    
+class AssayResult(models.Model):
+    job = models.ForeignKey(Job, on_delete=models.CASCADE)  # Job 직접 연결 추가
+    job_compound = models.ForeignKey(JobCompound, on_delete=models.CASCADE, null=True, blank=True)
+    assay_type = models.ForeignKey(AssayType, on_delete=models.CASCADE)
+    value = models.FloatField()
+    raw_data = models.JSONField(null=True, blank=True)  # 원본 데이터 저장 (필요한 경우)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = "assay_result"
+        indexes = [
+            models.Index(fields=['job'], name='idx_assay_result_job'),
+            models.Index(fields=['job_compound', 'assay_type'], name='idx_job_compound_assay_type')
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=['job_compound', 'assay_type'], name='unique_assay_result')
+        ]
+    
+    def __str__(self):
+        return f"AssayResult for Job {self.job.id} - {self.assay_type}: {self.value}"
+    
+class AssayCondition(models.Model):
+    assay_result = models.ForeignKey(AssayResult, on_delete=models.CASCADE)
+    parameter = models.CharField(max_length=50)  # 예: temperature, pH, time 등
+    value = models.CharField(max_length=50)
+    unit = models.CharField(max_length=20, null=True, blank=True)
+    
+    class Meta:
+        db_table = "assay_condition"
+        constraints = [
+            models.UniqueConstraint(fields=['assay_result', 'parameter'], name='unique_assay_condition')
+        ]
+    def __str__(self):
+        return f"{self.parameter}: {self.value} {self.unit or ''}"
 
 class Toxicity(models.Model):
     compound = models.OneToOneField(Compound, on_delete=models.CASCADE, primary_key=True)
@@ -502,4 +633,51 @@ class Toxicity(models.Model):
         db_table = "toxicity"
 
     def __str__(self):
-        return f"hERG: {self.herg}, AMES: {self.ames}, DILI: {self.dili}"
+        return f"Toxicity for Compound {self.compound.id}"
+
+class Scaffold(models.Model):
+    scaffold_smiles = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        db_table = "scaffold"
+    
+    def __str__(self):
+        return f"Scaffold: {self.scaffold_smiles}"
+
+class CompoundScaffold(models.Model):
+    compound = models.ForeignKey(Compound, on_delete=models.CASCADE, null=True, blank=True)
+    scaffold = models.ForeignKey(Scaffold, on_delete=models.CASCADE, null=True, blank=True)
+
+    class Meta:
+        db_table = "compound_scaffold"
+        constraints = [
+            UniqueConstraint(fields=['compound', 'scaffold'], name='unique_compound_scaffold')
+        ]
+
+    def __str__(self):
+        return f"CompoundScaffold {self.compound.id}:{self.scaffold.id}"
+
+class Dataset(models.Model):
+    name = models.CharField(max_length=255, null=True, blank=True)
+    owner = models.CharField(max_length=255, null=True, blank=True)
+    count = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        db_table = "dataset"
+    
+    def __str__(self):
+        return f"Dataset: {self.name}, {self.owner}, {self.count}"
+        
+
+class DatasetCompound(models.Model):
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE)
+    compound = models.ForeignKey(Compound, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "dataset_compound"
+        constraints = [
+            UniqueConstraint(fields = ['dataset', 'compound'], name='unique_dataset_compound')
+        ]
+    
+    def __str__(self):
+        return f"DatasetCompound {self.dataset.id}: {self.compound.id}"

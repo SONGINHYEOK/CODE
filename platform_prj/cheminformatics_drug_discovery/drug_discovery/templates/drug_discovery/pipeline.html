@@ -103,12 +103,12 @@
                 <label for="name">Project Name:</label>
                 <input type="text" id="name" name="name" required>
                 
-                <label for="target">PDB:</label>
+                <label for="target">Target:</label>
                 <select id="target" name="target" required>
                     <option value="">-- Select --</option>
                     {% for target in targets %}
-                        <option value="{{ target.target_type }}">{{ target.target_type }}</option>
-                    {% endfor %}
+                    <option value="{{ target.id }}">{{ target.name }} - {{ target.description }}</option>
+                 {% endfor %}
                 </select>
                 
                 <label for="progress">Progress: <span id="progressValue">50</span>%</label>

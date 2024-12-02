@@ -83,9 +83,9 @@ WSGI_APPLICATION = 'cheminformatics_drug_discovery.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'sih_platform',
+        'NAME': 'upload_test',
         'USER': 'postgres',
-        'PASSWORD': '1q2w3e4r**',  # PostgreSQL 비밀번호를 입력하세요
+        'PASSWORD': 'Sih1q2w3e4r**',  # PostgreSQL 비밀번호를 입력하세요
         'HOST': '14.33.209.250',
         'PORT': '5009',
     }
