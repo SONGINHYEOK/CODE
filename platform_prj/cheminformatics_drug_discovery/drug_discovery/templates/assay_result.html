@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assay Result</title>
+    <script src="https://unpkg.com/ngl@2.0.0-dev.37/dist/ngl.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        #container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 20px;
+        }
+        #topContainer {
+            display: flex;
+            gap: 20px;
+            height: 60%;
+        }
+        #leftContainer {
+            flex: 1;
+            border: 1px solid #ccc;
+        }
+        #rightContainer {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        #nglviewerContainer {
+            width: 100%;
+            height: 100%;
+        }
+        #tableWrapper {
+            flex: 2;
+            overflow: auto;
+            border: 1px solid #ccc;
+        }
+        #moleculeList {
+            flex: 1;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+        #bottomContainer {
+            height: 40%;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        #plotContainer {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        #axisSelector {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 10px;
+        }
+        #scatterPlot {
+            flex: 1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #F4F4F4;
+        }
+        tr:hover {
+            background-color: #F5F5F5;
+            cursor: pointer;
+        }
+        .selected {
+            background-color: #E3F2FD;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="topContainer">
+            <div id="leftContainer">
+                <div id="nglviewerContainer"></div>
+            </div>
+            <div id="rightContainer">
+                <div id="tableWrapper">
+                    <table id="resultTable">
+                        <thead>
+                            <tr>
+                                <th>Index</th>
+                                <th>SMILES</th>
+                                <th>Assay Value</th>
+                                <th>Display</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultTableBody">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="moleculeList">
+                    <h3>Selected Molecules</h3>
+                    <div id="selectedMolecules"></div>
+                </div>
+            </div>
+        </div>
+        <div id="bottomContainer">
+            <div id="plotContainer">
+                <div id="axisSelector">
+                    <select id="xAxis" onchange="updatePlot()">
+                        <option value="index">Index</option>
+                        <option value="value">Assay Value</option>
+                    </select>
+                    <select id="yAxis" onchange="updatePlot()">
+                        <option value="value">Assay Value</option>
+                        <option value="index">Index</option>
+                    </select>
+                </div>
+                <div id="scatterPlot"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let stage;
+        let compounds = {{ compounds_json|safe }};
+        let selectedMolecules = new Set();
+        document.addEventListener("DOMContentLoaded", function() {
+            initializeNGLViewer();
+            populateTable();
+            initializePlot();
+        });
+        function initializeNGLViewer() {
+            stage = new NGL.Stage("nglviewerContainer");
+            stage.setParameters({
+                backgroundColor: "white"
+            });
+        }
+        function populateTable() {
+            const tbody = document.getElementById('resultTableBody');
+            compounds.forEach((compound, index) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${compound.smiles}</td>
+                    <td>${compound.value !== null ? compound.value.toFixed(2) : 'N/A'}</td>
+                    <td><button onclick="toggleMolecule(${index})">Toggle</button></td>
+                `;
+                row.onclick = () => displayMolecule(compound.mol_3d);
+            });
+        }
+        function displayMolecule(mol3d) {
+            stage.removeAllComponents();
+            if (mol3d) {
+                stage.loadFile(new Blob([mol3d], {type: 'text/plain'}), {ext: 'mol2'})
+                    .then(function (component) {
+                        component.addRepresentation("ball+stick");
+                        stage.autoView();
+                    });
+            }
+        }
+        function toggleMolecule(index) {
+            if (selectedMolecules.has(index)) {
+                selectedMolecules.delete(index);
+            } else {
+                selectedMolecules.add(index);
+            }
+            updateSelectedMolecules();
+            updatePlot();
+        }
+        function updateSelectedMolecules() {
+            const container = document.getElementById('selectedMolecules');
+            container.innerHTML = Array.from(selectedMolecules)
+                .map(index => `<div>Molecule ${index + 1}: ${compounds[index].smiles}</div>`)
+                .join('');
+        }
+        function initializePlot() {
+            const trace = {
+                x: compounds.map((_, i) => i + 1),
+                y: compounds.map(c => c.value),
+                mode: 'markers',
+                type: 'scatter',
+                marker: {
+                    size: 10
+                }
+            };
+            const layout = {
+                title: 'Assay Results',
+                xaxis: {
+                    title: 'Index'
+                },
+                yaxis: {
+                    title: 'Assay Value'
+                }
+            };
+            Plotly.newPlot('scatterPlot', [trace], layout);
+        }
+        function updatePlot() {
+            const xSelect = document.getElementById('xAxis');
+            const ySelect = document.getElementById('yAxis');
+            let xData, yData;
+            const selectedData = Array.from(selectedMolecules).length > 0
+                ? compounds.filter((_, i) => selectedMolecules.has(i))
+                : compounds;
+            if (xSelect.value === 'index') {
+                xData = selectedData.map((_, i) => i + 1);
+            } else {
+                xData = selectedData.map(c => c.value);
+            }
+            if (ySelect.value === 'index') {
+                yData = selectedData.map((_, i) => i + 1);
+            } else {
+                yData = selectedData.map(c => c.value);
+            }
+            const trace = {
+                x: xData,
+                y: yData,
+                mode: 'markers',
+                type: 'scatter',
+                marker: {
+                    size: 10,
+                    color: selectedData.map(c => c.value),
+                    colorscale: 'Viridis',
+                    showscale: true
+                },
+                text: selectedData.map(c => c.smiles),
+                hovertemplate: 'SMILES: %{text}<br>X: %{x}<br>Y: %{y}<extra></extra>'
+            };
+            const layout = {
+                title: 'Assay Results',
+                xaxis: {
+                    title: xSelect.options[xSelect.selectedIndex].text
+                },
+                yaxis: {
+                    title: ySelect.options[ySelect.selectedIndex].text
+                },
+                hoverlabel: {
+                    bgcolor: '#FFF',
+                    font: {size: 12}
+                }
+            };
+            Plotly.newPlot('scatterPlot', [trace], layout);
+        }
+        // 플롯의 점을 클릭했을 때 해당 분자 구조 표시
+        document.getElementById('scatterPlot').on('plotly_click', function(data) {
+            const index = data.points[0].pointIndex;
+            if (compounds[index].mol_3d) {
+                displayMolecule(compounds[index].mol_3d);
+                // 테이블에서 해당 행 하이라이트
+                const rows = document.getElementById('resultTableBody').getElementsByTagName('tr');
+                Array.from(rows).forEach((row, i) => {
+                    if (i === index) {
+                        row.classList.add('selected');
+                        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else {
+                        row.classList.remove('selected');
+                    }
+                });
+            }
+        });
+        // 결과를 파일로 내보내기
+        function exportResults(format) {
+            const data = compounds.map((compound, index) => ({
+                Index: index + 1,
+                SMILES: compound.smiles,
+                'Assay Value': compound.value
+            }));
+            if (format === 'csv') {
+                const csv = convertToCSV(data);
+                downloadFile(csv, 'assay_results.csv', 'text/csv');
+            } else if (format === 'json') {
+                const json = JSON.stringify(data, null, 2);
+                downloadFile(json, 'assay_results.json', 'application/json');
+            }
+        }
+        function convertToCSV(data) {
+            const headers = Object.keys(data[0]);
+            const rows = data.map(obj => headers.map(header => obj[header]));
+            return [headers, ...rows].map(row => row.join(',')).join('\n');
+        }
+        function downloadFile(content, filename, contentType) {
+            const blob = new Blob([content], { type: contentType });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+        // 테이블 정렬 기능
+        function sortTable(column) {
+            const tbody = document.getElementById('resultTableBody');
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+            rows.sort((a, b) => {
+                let aVal = a.cells[column].textContent;
+                let bVal = b.cells[column].textContent;
+                if (column === 2) { // Assay Value column
+                    aVal = parseFloat(aVal) || 0;
+                    bVal = parseFloat(bVal) || 0;
+                }
+                if (aVal < bVal) return -1;
+                if (aVal > bVal) return 1;
+                return 0;
+            });
+            rows.forEach(row => tbody.appendChild(row));
+        }
+        // 테이블 필터링 기능
+        function filterTable(value) {
+            const tbody = document.getElementById('resultTableBody');
+            const rows = tbody.getElementsByTagName('tr');
+            Array.from(rows).forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(value.toLowerCase()) ? '' : 'none';
+            });
+        }
+    </script>
+    <!-- Export buttons -->
+    <div id="exportButtons" style="position: fixed; bottom: 20px; right: 20px;">
+        <button onclick="exportResults('csv')">Export CSV</button>
+        <button onclick="exportResults('json')">Export JSON</button>
+    </div>
+    <!-- Search/Filter input -->
+    <div id="searchContainer" style="position: fixed; top: 20px; right: 20px;">
+        <input type="text"
+               placeholder="Filter results..."
+               onkeyup="filterTable(this.value)"
+               style="padding: 5px; width: 200px;">
+    </div>
+</body>
+</html>
