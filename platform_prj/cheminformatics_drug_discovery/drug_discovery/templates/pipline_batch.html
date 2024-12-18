@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch - SilicoWorks</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .tabs-container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        [role="tablist"] {
+            display: flex;
+            gap: 1rem;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1rem;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            border-bottom: 2px solid #007bff;
+            color: #007bff;
+        }
+
+        .panel-1, .panel-2 {
+            display: none;
+            padding: 1rem;
+        }
+
+        .panel-1.active, .panel-2.active {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .tab-card {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .process-container {
+            width: 100%;
+            height: 400px;
+            position: relative;
+            overflow: auto;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+        }
+
+        #flowchart {
+            width: 100%;
+            height: 100%;
+        }
+
+        .add-btn {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        #addJobBtn {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #addJobBtn:hover {
+            background-color: #0056b3;
+        }
+
+        dialog {
+            width: 90%;
+            max-width: 500px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+        }
+
+        dialog::backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        label {
+            font-weight: 500;
+            color: #212529;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 500;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .process-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1 style="text-align: center; margin: 20px 0;">Compound Batch</h1>
+    </header>
+
+    <main class="container">
+        <div class="tabs-container">
+            <div role="tablist">
+                <button role="tab" aria-selected="true" aria-controls="panel-1" id="tab-1" class="tab active">
+                    Pipeline Dashboard
+                </button>
+                <button role="tab" aria-selected="false" aria-controls="panel-2" id="tab-2" class="tab">
+                    Project Dashboard
+                </button>
+            </div>
+
+            <div id="panel-1" role="tabpanel" aria-labelledby="tab-1" class="panel-1 active">
+                <div class="tab-card">
+                    <div class="process-container">
+                        <svg id="flowchart"></svg>
+                    </div>
+                </div>
+
+                <div class="tab-card">
+                    <div class="add-btn">
+                        <button id="addJobBtn">+ Job</button>
+                    </div>
+
+                    <dialog id="jobDialog">
+                        <form id="jobForm">
+                            {% csrf_token %}
+                            <div>
+                                <label for="jobType">Job:</label>
+                                <select id="jobType" name="jobType" required>
+                                    <option value="">-- 선택하세요 --</option>
+                                    {% for type in job_types %}
+                                    <option value="{{ type.id }}">{{ type.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label for="operator">Operator:</label>
+                                <input type="text" id="operator" name="operator" placeholder="검색할 이름을 입력하세요" required>
+                                <div id="operatorResults"></div>
+                            </div>
+                            <div>
+                                <label for="previous_job">Previous Job:</label>
+                                <select id="previous_job" name="previous_job[]" multiple required>
+                                    <option value="">-- 선택하세요 --</option>
+                                    {% if not all_jobs %}
+                                    <option value="start">Start</option>
+                                    {% endif %}
+                                    {% for job in all_jobs %}
+                                    <option value="{{ job.id }}">{{ job.id }} : {{ job.job_type.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="buttons">
+                                <button type="reset" id="cancel">Cancel</button>
+                                <button type="submit">Submit</button>
+                            </div>
+                        </form>
+                    </dialog>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Index</th>
+                                <th>Job ID</th>
+                                <th>Operator</th>
+                                <th>Status</th>
+                                <th>Start</th>
+                                <th>End</th>
+                            </tr>
+                        </thead>
+                        <tbody id="batchJobsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="panel-2" role="tabpanel" aria-labelledby="tab-2" class="panel-2">
+              <div class="tab-card">
+                  <h2>Project Info</h2>
+                  <p>Project ID: {{ project.id }}</p>
+                  <p>Project Name: {{ project.name }}</p>
+                  <p>Member: 서성욱</p>
+                  <p id="projectDate">Project Date: </p>
+                  <p>Project Status: {{ project.progress }}</p>
+              </div>
+              <div class="tab-card">
+                  <h2>Network</h2>
+              </div>
+          </div>
+        </div>
+    </main>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // 상태 변수
+        const projectId = "{{ project.id }}";
+        let nodes = [];
+        let links = [];
+        const horizontalSpacing = 180;
+        const verticalSpacing = 60;
+
+        // DOM 요소
+        const modal = document.getElementById("jobDialog");
+        const addJobButton = document.getElementById("addJobBtn");
+        const cancelBtn = modal.querySelector("#cancel");
+        const form = document.getElementById("jobForm");
+        const tableBody = document.getElementById("batchJobsTableBody");
+        const operatorInput = document.getElementById("operator");
+        const operatorResults = document.getElementById("operatorResults");
+        const flowchart = d3.select("#flowchart");
+
+        // 탭 처리
+        const tabs = document.querySelectorAll('[role="tab"]');
+        const panels = document.querySelectorAll('[role="tabpanel"]');
+          
+        tabs.forEach(tab => {
+          tab.addEventListener("click", e => {
+            const target = e.target;
+            const panelId = target.getAttribute("aria-controls");
+
+            tabs.forEach(tab => {
+              const selected = tab === target;
+              tab.setAttribute("aria-selected", selected);
+              tab.classList.toggle("active", selected);
+            });
+
+            panels.forEach(panel => {
+              const visible = panel.id === panelId;
+              panel.classList.toggle("active", visible);
+            });
+          });
+        });
+
+        function addNode(node) {
+            if (!nodes.find(n => n.id === node.id)) {
+              // console.log("Adding node:", node);
+              nodes.push(node);
+            }
+        }
+
+        function addLink(link) {
+          if (!links.find(l => l.source === link.source && l.target === link.target)) {
+            // console.log("Adding link:", link);
+            links.push(link);
+          }
+        }
+
+        function updateChart() {
+          flowchart.selectAll("*").remove();
+
+          const width = Math.max(...nodes.map(n => n.x)) + 200;
+          const height = Math.max(...nodes.map(n => n.y)) + 150;
+          flowchart.attr("viewBox", `0 0 ${width} ${height}`);
+
+          // 노드 스타일 정의
+          const nodeStyle = {
+            target: { fill: '#e3f2fd', stroke: '#2196f3' },
+            screening: { fill: '#f1f8e9', stroke: '#66bb6a' },
+            assay: { fill: '#fff3e0', stroke: '#ffa726' },
+            docking: { fill: '#f3e5f5', stroke: '#ab47bc' }
+          };
+
+          // 링크 그리기
+          const link = flowchart.selectAll(".link")
+            .data(links)
+            .enter()
+            .append("path")
+            .attr("class", "link")
+            .attr("d", d => {
+              const sourceNode = nodes.find(n => n.id === d.source);
+              const targetNode = nodes.find(n => n.id === d.target);
+              return `M${sourceNode.x + 60},${sourceNode.y} `
+                + `Q${(sourceNode.x + targetNode.x) / 2},${sourceNode.y} `
+                + `${targetNode.x - 60},${targetNode.y}`;
+            })
+            .attr("stroke", "#90a4ae")
+            .attr("stroke-width", 1.2)
+            .attr("stroke-dasharray", "4,4")
+            .attr("fill", "none");
+
+          // 노드 그리기
+          const node = flowchart.selectAll(".node")
+            .data(nodes)
+            .enter()
+            .append("g")
+            .attr("class", "node")
+            .attr("transform", d => `translate(${d.x},${d.y})`);
+
+          // 노드 배경
+          node.append("rect")
+            .attr("width", 120)
+            .attr("height", 40)
+            .attr("rx", 4)
+            .attr("ry", 4)
+            .attr("x", -60)
+            .attr("y", -20)
+            .attr("fill", d => nodeStyle[d.label]?.fill || '#ffffff')
+            .attr("stroke", d => nodeStyle[d.label]?.stroke || '#90a4ae')
+            .attr("stroke-width", 1.5)
+            .style("filter", "drop-shadow(0px 1px 2px rgba(0,0,0,0.1))");
+
+          // 노드 텍스트
+          node.append("text")
+            .attr("dy", "0.35em")
+            .attr("text-anchor", "middle")
+            .attr("font-size", "14px")
+            .attr("font-weight", "500")
+            .attr("fill", "#000000")
+            .text(d => d.label.charAt(0).toUpperCase() + d.label.slice(1));
+        }
+
+        // 차트 초기화
+        function initializeChart() {
+          const chartJobsJson = '{{ chart_jobs_json|default:"[]"|safe }}';
+          const linksJson = '{{ links_json|default:"[]"|safe }}';
+
+          const initialChartJobs = JSON.parse(chartJobsJson);
+          const initialLinks = JSON.parse(linksJson);
+
+          if (initialChartJobs.length === 0) {
+            console.log("차트에 보여줄 job이 없습니다.");
+            return;
+          }
+
+          const targetNode = initialChartJobs.find(job => job.job_id < 0);
+          if (!targetNode) {
+            console.log("target 노드가 없습니다.");
+            return;
+          }
+
+          const setPosition = (node, x, y) => {
+            node.x = x;
+            node.y = y;
+            addNode(node);
+          };
+
+          setPosition({ id: targetNode.job_id, label: targetNode.job_type }, 100, 100);
+
+          const setNodePositions = (parent, level) => {
+            const children = initialLinks.filter(link => link.source === parent.id);
+            children.forEach((childLink, index) => {
+              const childNode = initialChartJobs.find(job => job.job_id === childLink.target);
+              if (childNode) {
+                const childX = parent.x + horizontalSpacing;
+                const childY = 100 + index * verticalSpacing;
+                setPosition({ id: childNode.job_id, label: childNode.job_type }, childX, childY);
+                setNodePositions({ id: childNode.job_id, x: childX, y: childY}, level + 1);
+              }
+            });
+          };
+
+          setNodePositions({ id: targetNode.job_id, x: 100, y: 100 }, 0);
+
+          initialLinks.forEach(link => {
+            addLink({ source: link.source, target: link.target });
+          });
+
+          updateChart();
+        }
+
+        function updatePreviousJobSelect(jobs) {
+          const previousJobSelect = document.getElementById('previous_job');
+          previousJobSelect.innerHTML = '';
+
+          const defaultOption = document.createElement('option');
+          defaultOption.value = '';
+          defaultOption.textContent = '-- 선택하세요 --';
+          previousJobSelect.appendChild(defaultOption);
+
+          if (jobs.length === 0) {
+            const startOption = document.createElement('option');
+            startOption.value = 'start';
+            startOption.textContent = 'start';
+            previousJobSelect.appendChild(startOption);
+          }
+
+          jobs.forEach(job => {
+            const option = document.createElement('option');
+            option.value = job.id;
+            option.textContent = `${job.id} : ${job.type}`;
+            previousJobSelect.appendChild(option);
+          })
+        }
+
+        addJobButton.addEventListener("click", () => {
+          modal.showModal();
+          fetch(`/available_jobs/${projectId}/`)
+            .then(response => response.json())
+            .then(data => {
+              updatePreviousJobSelect(data.jobs);
+            });
+        });
+
+        // Form 제출 핸들러
+        const handleSubmit = (event) => {
+          event.preventDefault();
+
+          const formData = new FormData(form);
+          formData.append("project_id", projectId);
+          
+          fetch("/create_job/", {
+            method: "POST",
+            body: formData,
+            headers: {
+              "X-CSRFToken": "{{ csrf_token }}"
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.error) {
+              console.error("Error:", data.error);
+            } else {
+              // 차트 업데이트
+              const previousJobSelect = document.getElementById('previous_job');
+              const selectedPrevious = Array.from(previousJobSelect.selectedOptions)
+                .map(option => parseInt(option.value));
+
+              // 새 노드 생성 및 추가
+              // const parentNodes = nodes.filter(n => selectedPrevious.includes(n.id));
+              const newNode = {
+                id: data.job_id,
+                label: data.job_type,
+                x: nodes.length * horizontalSpacing + 100,
+                y: nodes.length * verticalSpacing + 100
+              };
+              addNode(newNode);
+
+              // 링크 추가
+              selectedPrevious.forEach(parentId => {
+                addLink({
+                  source: parentId,
+                  target: data.job_id
+                });
+              });
+
+              updateChart();
+
+              if (data.available_jobs) {
+                updatePreviousJobSelect(data.available_jobs);
+              }
+
+              // 테이블에 새 행 추가
+              const newRow = document.createElement("tr");
+              const rowCount = tableBody.rows.length;
+              
+              let href;
+              if (data.job_type === "assay") {
+                href = `/assay/start?project_id={{ project_id }}&batch_id=${data.batch_id}&job_id=${data.job_id}&operator_id=${data.operator_id}`;
+              } else {
+                href = `/job/start?project_id={{ project_id }}&batch_id=${data.batch_id}&job_id=${data.job_id}&operator_id=${data.operator_id}`;
+              }
+
+              newRow.innerHTML = `
+                <td><a href="${href}">${rowCount + 1}</a></td>
+                <td>${data.job_id}</td>
+                <td>${data.operator}</td>
+                <td>${data.status !== undefined ? data.status : 0}</td>
+                <td>${data.start !== undefined ? data.start : "N/A"}</td>
+                <td>${data.end !== undefined ? data.end : "N/A"}</td>
+              `;
+              tableBody.appendChild(newRow);
+
+              modal.close();
+              form.reset();
+            }
+          })
+          .catch(error => console.error("Error:", error));
+        };
+
+        // Operator 검색 핸들러
+        operatorInput.addEventListener("input", (event) => {
+          const query = event.target.value;
+          if (query.length < 2) {
+            operatorResults.innerHTML = "";
+            return;
+          }
+
+          fetch(`/search_operator/?q=${query}`)
+            .then(response => response.json())
+            .then(data => {
+              operatorResults.innerHTML = data.map(operator => 
+                  `<div class="operator-result">${operator.name}</div>`
+              ).join("");
+            })
+            .catch(error => console.error("Error:", error));
+        });
+
+        // Operator 결과 클릭 핸들러
+        operatorResults.addEventListener('click', (event) => {
+          if (event.target.matches('.operator-result')) {
+            operatorInput.value = event.target.textContent;
+            operatorResults.innerHTML = '';
+          }
+        });
+
+        // 초기 batch jobs 테이블 설정
+        const batchJobsJson = '{{ batch_jobs_json|default:"[]"|safe }}';
+        const batchJobs = JSON.parse(batchJobsJson);
+
+        if (batchJobs.length > 0) {
+          const projectStartDate = batchJobs[0].start !== 'N/A' 
+            ? new Date(batchJobs[0].start).toLocaleString() 
+            : 'N/A';
+          document.getElementById('projectDate').textContent = `Project Date: ${projectStartDate}`;
+        }
+
+        batchJobs.forEach((job, index) => {
+          const newRow = document.createElement("tr");
+          let href = "javascript:void(0);";
+          let onclick = "";
+
+          if (job.status === 0) {
+            if (job.job_type === 'assay') {
+              href = `/assay/start?project_id={{ project_id }}&batch_id=${job.batch_id}&job_id=${job.job_id}&operator_id=${job.operator}`;
+            } else {
+              href = `/job/start?project_id={{ project_id }}&batch_id=${job.batch_id}&job_id=${job.job_id}&operator_id=${job.operator}`;
+            }
+          } else if (0 < job.status && job.status < 100) {
+            onclick = "alert('실행 중입니다.');";
+          } else if (job.status === 100) {
+            if (job.job_type === 'assay') {
+              href = `/assay/results?project_id={{ project_id }}&batch_id=${job.batch_id}&job_sid=${job.job_id}&operator_id=${job.operator}`;
+            } else {
+              href = `/docking/results?project_id={{ project_id }}&batch_id=${job.batch_id}&job_id=${job.job_id}`;
+            }
+          }
+
+          newRow.innerHTML = `
+            <td>
+              <a href="${href}" ${onclick ? `onclick="${onclick}"` : ''}>
+                ${index + 1}
+              </a>
+            </td>
+            <td>${job.job_id}</td>
+            <td>${job.operator}</td>
+            <td>${job.status}</td>
+            <td>${job.start !== 'N/A' ? new Date(job.start).toLocaleString() : 'N/A'}</td>
+            <td>${job.end !== 'N/A' ? new Date(job.end).toLocaleString() : 'N/A'}</td>
+          `;
+          tableBody.appendChild(newRow);
+        });
+
+        // 모달 제어
+        const closeModal = () => {
+          modal.close();
+          form.reset();
+        };
+
+        const handleOutsideClick = (event) => {
+          if (event.target === modal) {
+            closeModal();
+          }
+        };
+
+        // 이벤트 리스너
+        // addJobButton.addEventListener("click", () => modal.showModal());
+        form.addEventListener("submit", handleSubmit);
+        cancelBtn.addEventListener("click", closeModal);
+        window.addEventListener("click", handleOutsideClick);
+
+        // 차트 초기화
+        initializeChart();
+      });
+    </script>
+</body>
+</html>
