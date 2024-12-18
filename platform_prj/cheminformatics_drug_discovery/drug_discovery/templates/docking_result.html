@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.rawgit.com/arose/ngl/master/dist/ngl.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style scoped>
+    body { margin: 0; padding: 0; overflow: hidden; }
+    #container {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    #topContainer {
+      display: flex;
+      flex-direction: row;
+      flex: 6;
+      width: 100%;
+      min-height: 0;
+    }
+    #leftContainer {
+      flex: 7;
+      position: relative;
+      display: flex;
+    }
+    #rightContainer {
+      flex: 3;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+    #nglviewerContainer {
+      width: 100%; 
+      height: 100%;
+      position: relative;
+    }
+    #tableWrapper {
+      height: 60vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #tableScrollContainer {
+      flex-grow: 1;
+      overflow-y: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    #moleculeListBtn {
+      height: 40px;
+      width: 100%;
+      margin-top: 20px;
+    }
+    #messageBox {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px;
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      border-radius: 4px;
+      color: #721c24;
+      display: none;
+      z-index: 1000;
+    }
+    #bottomContainer {
+      flex: 4; 
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: #f9f9f9; 
+      /* padding: 10px; */
+      padding: 10px 10px 30px 10px;
+      box-sizing: border-box;
+      min-height: 0;
+    }    
+    /* svg {
+      width: 100%;
+      height: 100%;
+    } */
+    #dropdownContainer {
+      display: flex;
+      gap: 20px;
+      margin-top: 30px;
+      margin-bottom: 5px;
+    }
+    #scatterPlot {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 5px
+      /* overflow: auto; */
+    }
+    
+  </style>
+</head>
+<body>
+  <div id="container" class="container">
+    <div id="topContainer">
+      <div id="leftContainer" class="left-container">
+        <div id="nglviewerContainer"></div>
+      </div>
+      <div id="rightContainer" class="right-container">
+        <div id="tableWrapper">
+          <div id="tableScrollContainer">
+            <table>
+              <thead>
+                <tr>
+                  <th>index</th>
+                  <th>smiles</th>
+                  <th>score</th>
+                  <th>display</th>
+                </tr>
+              </thead>
+              <tbody id="relatedTable"></tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <button id="moleculeListBtn">molecule list</button>
+        </div>
+      </div>
+    </div>
+    <div id="bottomContainer">
+      <div id="dropdownContainer">
+        <label for="xAxisSelect">X축:</label>
+        <select id="xAxisSelect"></select>
+        <label for="yAxisSelect">Y축:</label>
+        <select id="yAxisSelect"></select>
+      </div>
+      <div id="scatterPlot"></div>
+    </div>
+  </div>
+  <div id="messageBox"></div>
+  <script>
+    let stage;
+    let structureComponent;
+    let ligandRepresentations = {};
+    const tableBody = document.getElementById("relatedTable");
+
+    document.addEventListener("DOMContentLoaded", function () {
+      initNGLViewer();
+
+      const rawCompoundsJson = '{{ compounds_json|escapejs }}';
+      // console.log("Raw compounds JSON:", rawCompoundsJson);
+
+      let compounds;
+      try {
+        compounds = JSON.parse(rawCompoundsJson);
+        // console.log("Parsed compounds:", compounds);
+      } catch (error) {
+        console.error("Error parsing compounds JSON:", error);
+        showMessage(`Error parsing compounds data: ${error.message}`, 'error');
+        compounds = [];
+      }
+
+      compounds.forEach((compound, index) => {
+        // console.log(`Compound ${index}:`, compound);
+        const newRow = document.createElement("tr");
+        let href = "javascript:void(0);";
+        let onclick = "";
+        href = `/molecule_detail?job_compound_id=${compound.job_compound_id}&result_compound_id=${compound.result_compound_id}`;
+        // <td>${index + 1}</td>
+        newRow.innerHTML = `
+          <td>
+            <a href="${href}" ${onclick ? `onclick="${onclick}"` : ''}>
+              ${index + 1}
+            </a>
+          </td>
+          <td>${compound.smiles}</td>
+          <td>${compound.score}</td>
+          <td>
+            <input type="checkbox" name="selected_items" 
+              value="${compound.mol_3d !== null ? compound.mol_3d : ''}" 
+              data-id="${compound.result_compound_id}" 
+              data-smiles="${compound.smiles}" 
+              data-score="${compound.score}"/>
+          </td>
+        `;
+        tableBody.appendChild(newRow);
+      });
+
+      document.querySelectorAll('input[name="selected_items"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          const mol3d = this.value;
+          const id = this.dataset.id;
+          console.log(`Checkbox changed. mol3d length: ${mol3d.length}, id: ${id}`);
+          toggleSelection(id);
+        });
+      });
+
+      const moleculeListBtn = document.getElementById("moleculeListBtn");
+      moleculeListBtn.addEventListener("click", function () {
+        const selectedItems = [];
+        const checkboxes = document.querySelectorAll('input[name="selected_items"]:checked');
+
+        checkboxes.forEach((checkbox) => {
+          selectedItems.push({
+            id: checkbox.dataset.id,
+            smiles: checkbox.dataset.smiles,
+            score: checkbox.dataset.score,
+            mol_3d: checkbox.value
+          });
+        });
+
+        if (selectedItems.length > 0) {
+          fetch("/molecule_list/", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": "{{ csrf_token }}" 
+            },
+            body: JSON.stringify({ selected_compounds: selectedItems })
+          })
+          .then(response => response.json())
+          .then(data => {
+            console.log("Response from server:", data);
+            showMessage("Compounds submitted successfully", 'success');
+          })
+          .catch(error => {
+            console.error("Error submitting compounds:", error);
+            showMessage(`Error submitting compounds: ${error.message}`, 'error');
+          });
+        } else {
+          showMessage("No compounds selected", 'error');
+        }
+      });
+
+      initScatterPlot();
+    });
+
+    function initNGLViewer() {
+      try {
+        stage = new NGL.Stage("nglviewerContainer");
+        stage.setParameters({ backgroundColor: "black" });
+        showMessage("NGL Viewer initialized successfully", 'success');
+        
+        stage.loadFile("rcsb://3FXI").then(function (component) {
+          structureComponent = component;
+          removeSolventAndWater(component);
+          component.addRepresentation("cartoon", {sele: "protein", color: "chainname" });
+          component.autoView();
+          showMessage("Initial structure loaded successfully", 'success');
+        }).catch(function(error) {
+          console.error("Error loading initial structure:", error);
+          showMessage(`Failed to load initial structure: ${error.message}`, 'error');
+        });
+      } catch (error) {
+        console.error("Error initializing NGL Viewer:", error);
+        showMessage(`Failed to initialize NGL Viewer: ${error.message}`, 'error');
+      }
+    }
+
+    function visualizeMolecule(mol3d, id) {
+      console.log(`Visualizing molecule. mol3d length: ${mol3d.length}, id: ${id}`);
+      showMessage(`Attempting to visualize molecule ${id}...`);
+
+      if (!mol3d || mol3d.length === 0) {
+        showMessage(`No 3D molecule data available for id: ${id}`, 'error');
+        return;
+      }
+
+      removeMoleculeVisualization(id);
+
+      try {
+        const blob = new Blob([mol3d], {type: 'text/plain'});
+        stage.loadFile(blob, {ext: 'mol'}).then(function (component) {
+          component.addRepresentation("licorice",
+                                        {sele: "hetero and not (water or ion)",
+                                        });
+          component.autoView("selection-expression", 2000);
+          ligandRepresentations[id] = component;
+          showMessage(`Molecule ${id} visualized successfully`, 'success');
+        }).catch(function(error) {
+          console.error("Error loading molecule:", error);
+          showMessage(`Failed to visualize molecule ${id}: ${error.message}`, 'error');
+        });
+      } catch (error) {
+        console.error("Error creating Blob or loading file:", error);
+        showMessage(`Error processing molecule data: ${error.message}`, 'error');
+      }
+    }
+
+    function removeMoleculeVisualization(id) {
+      if (ligandRepresentations[id]) {
+        stage.removeComponent(ligandRepresentations[id]);
+        delete ligandRepresentations[id];
+        console.log(`Removed visualization for molecule ${id}`);
+
+        if (structureComponent) {
+          structureComponent.autoView(undefined, 1000);
+        }
+      }
+    }
+
+    function removeSolventAndWater(component) {
+      const selection = 'not (water or ion)';
+      component.removeAllRepresentations();
+      component.addRepresentation("cartoon", { colorScheme: "chainindex", sele: selection });
+    }
+
+    function showMessage(message, type = 'info') {
+      const messageBox = document.getElementById('messageBox');
+      messageBox.textContent = message;
+      messageBox.style.display = 'block';
+      
+      switch(type) {
+        case 'success':
+          messageBox.style.backgroundColor = '#d4edda';
+          messageBox.style.borderColor = '#c3e6cb';
+          messageBox.style.color = '#155724';
+          break;
+        case 'error':
+          messageBox.style.backgroundColor = '#f8d7da';
+          messageBox.style.borderColor = '#f5c6cb';
+          messageBox.style.color = '#721c24';
+          break;
+        default:
+          messageBox.style.backgroundColor = '#e2e3e5';
+          messageBox.style.borderColor = '#d6d8db';
+          messageBox.style.color = '#383d41';
+      }
+
+      setTimeout(() => {
+        messageBox.style.display = 'none';
+      }, 5000);
+    }
+
+    function initScatterPlot() {
+      const bottomContainer = document.getElementById("bottomContainer");
+      const width = bottomContainer.clientWidth;
+      const height = bottomContainer.clientHeight;
+      const marginTop = 20;
+      const marginRight = 40;
+      const marginBottom = 60;
+      const marginLeft = 40;
+      
+      const physicochemsJson = '{{ physico_json|escapejs }}';
+      const physicochems = JSON.parse(physicochemsJson);
+
+      const data = physicochems.map(item => ({
+        result_compound_id: item.result_compound_id,
+        molecular_weight: item.molecular_weight,
+        logP: item.logP,
+        hydrogen_bond_acceptors: item.hydrogen_bond_acceptors,
+        hydrogen_bond_donors: item.hydrogen_bond_donors,
+        lipinski: item.lipinski,
+        qed: item.qed,
+        stereo_centers: item.stereo_centers,
+        tpsa: item.tpsa,
+        score: item.score
+      }));
+
+      // console.log("First physico item:", physicochems[0]);
+      // console.log("First mapped data item:", data[0]);
+      // console.log("Score values:", data.map(d => d.score));
+      // console.log("Score range:", d3.extent(data, d => d.score));
+
+      const properties = Object.keys(data[0]).filter(key => key !== 'result_compound_id' && key !== 'score');
+      const xSelect = document.getElementById('xAxisSelect');
+      const ySelect = document.getElementById('yAxisSelect');
+
+      properties.forEach(prop => {
+        xSelect.add(new Option(prop, prop));
+        ySelect.add(new Option(prop, prop));
+      });
+
+      xSelect.value = 'molecular_weight';
+      ySelect.value = 'logP';
+
+      function resetSelections() {
+        document.querySelectorAll('input[name="selected_items"]:checked').forEach(checkbox => {
+          checkbox.checked = false;
+        });
+
+        Object.keys(ligandRepresentations).forEach(id => {
+          removeMoleculeVisualization(id);
+        });
+      }
+
+      function updateScatterPlot() {
+        resetSelections();
+        
+        const xAxisProperty = xSelect.value;
+        const yAxisProperty = ySelect.value;
+
+        const x = d3.scaleLinear()
+          .domain(d3.extent(data, d => d[xAxisProperty])).nice()
+          // .domain([
+          //   d3.min(data, d => d[xAxisProperty]) * 0.8,
+          //   d3.max(data, d => d[xAxisProperty])
+          // ]).nice()
+          // .domain([
+          //   d3.mean(data, d => d[xAxisProperty]) - d3.deviation(data, d => d[xAxisProperty]) * 3,  // 평균 - 3*표준편차
+          //   d3.mean(data, d => d[xAxisProperty]) + d3.deviation(data, d => d[xAxisProperty]) * 3   // 평균 + 3*표준편차
+          // ]).nice()
+          .range([marginLeft, width - marginRight])
+          .unknown(marginLeft);
+
+        const y = d3.scaleLinear()
+          .domain(d3.extent(data, d => d[yAxisProperty])).nice()
+          // .domain([
+          //   d3.min(data, d => d[yAxisProperty]) * 0.8, 
+          //   d3.max(data, d => d[yAxisProperty])
+          // ]).nice()
+          // .domain([
+          //   d3.mean(data, d => d[yAxisProperty]) - d3.deviation(data, d => d[yAxisProperty]) * 3,  // 평균 - 3*표준편차
+          //   d3.mean(data, d => d[yAxisProperty]) + d3.deviation(data, d => d[yAxisProperty]) * 3   // 평균 + 3*표준편차
+          // ]).nice()
+          .range([height - marginBottom, marginTop])
+          .unknown(height - marginBottom);
+
+        const svg = d3.select("#scatterPlot").html("").append("svg")
+          .attr("viewBox", [0, 0, width, height]);
+
+        const xAxis = svg.append("g")
+          .attr("transform", `translate(0, ${height - marginBottom})`)
+          .call(d3.axisBottom(x).tickSize(-height*0.8))
+          .call(g => g.select(".domain").remove());
+        
+        xAxis.append("text")
+          .attr("class", "axis-label")
+          .attr("x", width / 2)
+          .attr("y", marginBottom - 30)
+          .attr("fill", "currentColor")
+          .attr("text-anchor", "middle")
+          .attr("font-size", "14px")
+          .attr("font-weight", "bold")
+          .text(xAxisProperty);
+
+        const yAxis= svg.append("g")
+          .attr("transform", `translate(${marginLeft},0)`)
+          .call(d3.axisLeft(y).tickSize(-width*1.1))
+          .call(g => g.select(".domain").remove());
+        
+        yAxis.append("text")
+          .attr("class", "axis-label")
+          .attr("x", -height / 2)
+          .attr("y", -marginLeft + 15)
+          .attr("fill", "currentColor")
+          .attr("transform", "rotate(-90)")
+          .attr("text-anchor", "middle")
+          .attr("font-size", "14px")
+          .attr("font-weight", "bold")
+          .text(yAxisProperty);
+
+        svg.selectAll(".tick line")
+          .attr("stroke", "#DCDCDC")
+          // .attr("opacity", 0.8)
+
+        const colorScale = d3.scaleSequential()
+          .domain([d3.min(data, d => d.score), d3.max(data, d => d.score)])
+          .interpolator(d3.interpolateRgbBasis([
+            "#27AE60",  // 초록 (낮은 값)
+            "#F1C40F",  // 노랑 (중간 값)
+            "#E74C3C"   // 빨강 (높은 값)
+          ]));
+
+        // console.log("Score range:", d3.extent(data, d => d.score));
+        // console.log("Sample data point:", data[0]);
+        
+        const dot = svg.append("g")
+          .selectAll("circle")
+          .data(data)
+          .join("circle")
+            .attr("cx", d => x(d[xAxisProperty]))
+            .attr("cy", d => y(d[yAxisProperty]))
+            .attr("r", 4)
+            .attr("fill", d => colorScale(d.score))
+            .attr("opacity", 0.7)
+            .attr("stroke", d => d3.rgb(colorScale(d.score)).darker(0.5))
+            .attr("stroke-width", 1)
+            .attr("data-id", d => d.result_compound_id)
+            .on("click", function(event, d) {
+              toggleSelection(d.result_compound_id);
+            });
+      }
+
+      xSelect.addEventListener('change', updateScatterPlot);
+      ySelect.addEventListener('change', updateScatterPlot);
+
+      updateScatterPlot();
+    }
+
+    function toggleSelection(id) {
+      const circle = d3.select(`circle[data-id="${id}"]`);
+      const isSelected = circle.classed("selected");
+
+      circle
+        .classed("selected", !isSelected)
+        .attr("r", !isSelected ? 7 : 4)
+        .attr("stroke", !isSelected ? "black" : d3.rgb(circle.attr("fill")).darker(0.5))
+        .attr("stroke-width", !isSelected ? 3 : 1)
+        .attr("opacity", !isSelected ? 1 : 0.7);
+      
+      const checkbox = document.querySelector(`input[name="selected_items"][data-id="${id}"]`);
+      if (checkbox) {
+        checkbox.checked = !isSelected;
+        if (checkbox.checked) {
+          visualizeMolecule(checkbox.value, id);
+        } else {
+          removeMoleculeVisualization(id);
+        }
+      }
+    }
+
+  </script>
+</body>
+</html>
