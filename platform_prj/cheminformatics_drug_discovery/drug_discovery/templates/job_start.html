@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=yes, minimum-scale=1.0, maximum-scale=1.0">
+    <title>Protein Viewer</title>
+    <script src="https://cdn.rawgit.com/arose/ngl/master/dist/ngl.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style scoped>
+        body { margin: 0; padding: 0; overflow: hidden; }
+        .container { width: 100%; height: 100%; }
+        #nglviewerContainer { width: 100%; height: 100vh; position: absolute; top: 0; left: 0; }
+        #guiContainer { display: none; position: absolute; top: 10px; right: 10px; transition: transform 0.3s ease-in-out; }
+        #gui { width: 300px; background: rgba(255, 255, 255, 0.9); padding: 15px; overflow-y: auto; max-height: calc(100vh - 40px); border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        #gui.collapsed { display: none; }
+        #gui input[type="text"], #gui input[type="file"], #gui button { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        #gui button { background-color: #BDBDBD; color: white; border: none; cursor: pointer; transition: background-color 0.3s; }
+        #gui button:hover { background-color: #A9A9A9; }
+        .collapsible { background-color: #f8f8f8; color: #444; cursor: pointer; padding: 18px; width: 100%; border: none; text-align: left; outline: none; font-size: 15px; transition: 0.4s; border-radius: 8px 8px 0 0; margin-top: 15px; }
+        .active, .collapsible:hover { background-color: #ccc; }
+        .content { padding: 0 18px; display: none; overflow: hidden; background-color: white; border-radius: 0 0 8px 8px; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; background-color: white; overflow: hidden; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f8f8; font-weight: bold; text-transform: uppercase; font-size: 0.85em; color: #333; }
+        tr:last-child td { border-bottom: none; }
+        input[type="checkbox"] { transform: scale(1.2); }
+        #toggleGui { position: absolute; top: 10px; right: 10px; z-index: 1000; background-color: #BDBDBD; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+        .pdb-select-container {
+          margin-bottom: 20px;
+        }
+
+        #ligand_container {
+          margin-bottom: 20px;
+        }
+
+        .mt-20 {
+          margin-top: 20px;
+        }
+        #searchJobBtn, #experimentBtn { min-width: 0 !important; width: auto !important; background-color: #BDBDBD; transition: background-color 0.3s; }
+        #searchJobBtn:hover, #experimentBtn:hover { background-color: #A9A9A9; }
+        dialog {
+            width: 90%;
+            max-width: 500px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+        }
+
+        dialog::backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        label {
+            font-weight: 500;
+            color: #212529;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            max-width: fit-content;
+        }
+        #btnBox { display: flex; justify-content: center; }
+        #pagination { display: flex; justify-content: center; align-items: center; margin-top: 20px; }
+        #pagination button { margin: 0 10px; padding: 5px 10px; background-color: #BDBDBD; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        #pagination button:disabled { background-color: #E0E0E0; cursor: not-allowed; }
+        #pagination span { font-weight: bold; }
+        @media (max-width: 600px) { 
+            #gui { width: calc(100% - 40px); max-height: 50vh; }
+            th, td { padding: 8px 10px; font-size: 0.9em; }
+        }
+    </style>
+</head>
+<body>
+    <div id="container" class="container">
+        <div id="nglviewerContainer"></div>
+        <button id="toggleGui">GUI 설정</button>
+        <div id="guiContainer">
+            <div id="gui">
+                <form id="experimentForm" method="POST" action="/experiment/">
+                    {% csrf_token %}
+                    <input type="hidden" name="job_id" id="job_id" value="{{ job_id }}">
+                    <input type="hidden" name="target_type" id="target_type" value="{{ target_type }}">
+                    <input type="hidden" name="PDB_ID" id="PDB_ID" value="{{ target_type }}">
+                    <input type="file" id="pdbfile" accept=".pdb">
+                    <div id="table_container">
+                      <div class="pdb-select-container">
+                        <label for="pdb">PDB:</label>
+                        <select id="pdb" name="pdb" required>
+                          <option value="">-- 선택하세요 --</option>
+                          {% for pdb in pdbs %}
+                            <!-- {{ pdb.original_id|json_script:"pdb-debug" }} -->
+                            <option value="{{ pdb.original_id }}">{{ pdb.original_id }}</option>
+                          {% empty %}
+                            <option value="">관련 PDB가 없습니다.</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div id="ligand_container"></div>
+                      <button type="button" id="searchJobBtn" class="mt-20">Search Job</button>
+                      <div id="datasetTable" style="margin-top: 20px;"></div>
+                    </div>
+                    <div id="btnBox">
+                        <button type="submit" id="experimentBtn">실험</button>
+                    </div>
+                </form>
+            
+                <!-- modal -->
+                <dialog id="searchJobDialog">
+                    <form id="searchJobForm">
+                      {% csrf_token %}
+                      <!-- <span id="closeModal" style="float:right;">&times;</span> -->
+                      <div id="datasetModalContent">
+                        <h2>Search Job</h2>
+                        <select id="selectJob" name="selected_job_id" required>
+                          <option value="">-- 선택하세요 --</option>
+                          {% for job in other_jobs %}
+                          <option value="{{ job.id }}">{{ job.id }}  |  {{ job.job_type }}  |  {{ job.operator.member.name }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="buttons">
+                          <button type="button" id="cancel">Cancel</button>
+                          <button type="submit">Submit</button>
+                      </div>
+                    </form>
+                </dialog>
+            </div>
+        </div>
+    </div>
+
+    <script>
+      console.log("Available PDBs:", JSON.parse('{{ pdbs_json|safe }}'));
+        let stage;
+        let structureComponent;
+        let ligandRepresentations = {};
+        let compoundComponents = {};
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let allData = [];
+        let checkedItems = new Set();
+
+        function toggleCompoundDisplay(checkbox) {
+            const mol3d = checkbox.dataset.mol3d;
+            const compoundId = checkbox.dataset.index;
+
+            if (!mol3d) {
+                console.error("No mol3d data available for this compound");
+                return;
+            }
+
+            if (checkbox.checked) {
+                if (compoundComponents[compoundId]) {
+                    compoundComponents[compoundId].setVisibility(true);
+                } else {
+                    stage.loadFile(new Blob([mol3d], {type: 'chemical/x-mdl-molfile'}), {ext: 'mol'})
+                        .then(component => {
+                            component.addRepresentation("ball+stick");
+                            compoundComponents[compoundId] = component;
+                            stage.autoView();
+                        });
+                }
+            } else {
+                if (compoundComponents[compoundId]) {
+                    compoundComponents[compoundId].setVisibility(false);
+                }
+            }
+
+            const allUnchecked = Array.from(document.querySelectorAll('.display-checkbox'))
+                .every(cb => !cb.checked);
+
+            if (allUnchecked) {
+                removeAllCompounds();
+            }
+        }
+
+        function removeAllCompounds() {
+            Object.values(compoundComponents).forEach(component => {
+                stage.removeComponent(component);
+            });
+            compoundComponents = {};
+            stage.autoView();
+        }
+
+        function renderTable() {
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageData = allData.slice(startIndex, endIndex);
+
+            let datasetTable = document.getElementById("datasetTable");
+            let tbodyContent = "";
+
+            pageData.forEach((item, index) => {
+                const isChecked = checkedItems.has(item.id) ? 'checked' : '';
+                tbodyContent += `
+                    <tr>
+                        <td>${startIndex + index + 1}</td>
+                        <td>${item.data}</td>
+                        <td>
+                            <input 
+                                type="checkbox" 
+                                class="display-checkbox" 
+                                name="selected_items"
+                                value='${JSON.stringify({id: item.id, type: item.type, mol_3d: item.mol_3d})}'
+                                data-mol3d="${item.mol_3d || ''}" 
+                                data-index="${item.id}" 
+                                ${isChecked} 
+                            />
+                        </td>
+                    </tr>
+                `;
+            });
+
+            datasetTable.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>seq/smi</th>
+                            <th>Display</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tbodyContent}
+                    </tbody>
+                </table>
+                <div id="pagination"></div>
+            `;
+
+            renderPagination();
+
+            document.querySelectorAll('.display-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const index = parseInt(this.dataset.index);
+                    if (this.checked) {
+                        checkedItems.add(index);
+                    } else {
+                        checkedItems.delete(index);
+                    }
+                    toggleCompoundDisplay(this);
+                });
+            });
+        }
+
+        function renderPagination() {
+            const totalPages = Math.ceil(allData.length / itemsPerPage);
+            let paginationHtml = `
+                <button class="pagination-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>이전</button>
+                <span>${currentPage} / ${totalPages}</span>
+                <button class="pagination-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>다음</button>
+            `;
+
+            document.getElementById('pagination').innerHTML = paginationHtml;
+
+            document.querySelectorAll('.pagination-btn').forEach(btn => {
+                btn.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                });
+            });
+        }
+
+        function changePage(page) {
+            const totalPages = Math.ceil(allData.length / itemsPerPage);
+            if (page < 1 || page > totalPages) {
+                return;
+            }
+            currentPage = page;
+            renderTable();
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            stage = new NGL.Stage("nglviewerContainer");
+            stage.setParameters({ backgroundColor: "black" });
+
+            // stage.loadFile("rcsb://" + "{{ target_type }}").then(function (component) {
+            //     structureComponent = component;
+            //     removeSolventAndWater(component);
+            //     component.addRepresentation("cartoon", { colorScheme: "chainindex" });
+            //     component.autoView();
+            //     identifyLigandsOrResidues(component);
+            // }).catch(function(error) {
+            //     console.error("Error loading structure:", error);
+            // });
+
+            document.getElementById('pdbfile').addEventListener('change', loadProteinFromFile);
+
+            window.addEventListener('resize', function() {
+                stage.handleResize();
+            }); 
+
+            document.getElementById('toggleGui').addEventListener('click', function() {
+                document.getElementById('guiContainer').style.display = 'block';
+                document.getElementById('toggleGui').style.display = 'none';
+            });
+
+            window.addEventListener('click', function(event) {
+                const guiContainer = document.getElementById('guiContainer');
+                const toggleGui = document.getElementById('toggleGui');
+                const pagination = document.getElementById('pagination');
+
+                if (event.target !== guiContainer && 
+                    !guiContainer.contains(event.target) && 
+                    event.target !== toggleGui &&
+                    !pagination.contains(event.target)) {
+                    guiContainer.style.display = 'none';
+                    toggleGui.style.display = 'block';
+                }
+            });
+
+            const searchJobModal = document.getElementById("searchJobDialog");
+            const searchJobBtn = document.getElementById("searchJobBtn");
+            const searchJobModalCancelBtn = searchJobModal.querySelector("#cancel");
+            const searchJobForm = document.getElementById("searchJobForm");
+
+            searchJobBtn.addEventListener("click", () => {
+              searchJobModal.showModal();
+            })
+
+            // document.getElementById("searchJobBtn").addEventListener("click", function(event) {
+            //     event.preventDefault();
+            //     document.getElementById("searchJobDialog").showModal();
+            // });
+
+            // document.getElementById("closeModal").addEventListener("click", function() {
+            //     document.getElementById("searchJobDialog").close();
+            // });
+            
+            const closeSearchJobModal = () => {
+              searchJobModal.close();
+              searchJobForm.reset();
+            };
+
+            const handleOutsideClick = (e) => {
+              if (e.target === searchJobModal) {
+                closeSearchJobModal();
+              } 
+              // elif (e.target === experimentModal) {}
+            };
+
+            // searchJobForm.addEventListener("submit", handleSubmit);
+            searchJobModalCancelBtn.addEventListener("click", closeSearchJobModal);
+            window.addEventListener("click", handleOutsideClick);
+
+            document.getElementById("searchJobForm").addEventListener("submit", async function(event) {
+                event.preventDefault();
+
+                const selectedJobId = document.getElementById("selectJob").value;
+
+                if (selectedJobId) {
+                    try {
+                        const response = await fetch(`/job/data/${selectedJobId}/`);
+                        allData = await response.json();
+
+                        if (allData.length > 0) {
+                            currentPage = 1;
+                            renderTable();
+                            document.getElementById("searchJobDialog").close();
+                        } else {
+                            alert("No related data found for the selected project.");
+                        }
+                    } catch (error) {
+                        console.error("Error:", error);
+                    }
+                } else {
+                    alert("프로젝트를 선택해주세요.");
+                }
+
+                Object.values(compoundComponents).forEach(component => {
+                    stage.removeComponent(component);
+                });
+                compoundComponents = {};
+
+                document.getElementById("searchJobDialog").close();
+            });
+
+            document.getElementById("experimentForm").addEventListener("submit", async function(event) {
+              event.preventDefault();
+              console.log("Form is being submitted");
+              const form = event.target;
+              const formData = new FormData(form);
+
+              // binding_sites 정보 수집 및 추가
+              const bindingSites = {};
+              document.querySelectorAll("input[name='selected_binding_sites']:checked").forEach(input => {
+                  const [ligandName, siteNumber] = input.value.split(':');
+                  if (!bindingSites[ligandName]) {
+                      bindingSites[ligandName] = [];
+                  }
+                  bindingSites[ligandName].push(siteNumber);
+              });
+              formData.set('binding_sites', JSON.stringify(bindingSites));
+
+              // 선택된 화합물 ID 수집 및 추가
+              const selectedCompoundIds = [];
+              document.querySelectorAll("input[name='selected_items']:checked").forEach(input => {
+                  selectedCompoundIds.push(input.dataset.index);
+              });
+              formData.set('selected_compound_ids', JSON.stringify(selectedCompoundIds));
+
+              console.log("FormData before submission:");
+              formData.forEach((value, key) => {
+                  console.log(key, value);
+              });
+
+              try {
+                  const response = await fetch(form.action, {
+                      method: "POST",
+                      body: formData
+                  });
+
+                  console.log("Response status:", response.status);
+
+                  if (!response.ok) {
+                      const errorText = await response.text();
+                      console.error("Response error text:", errorText);
+                      throw new Error(`HTTP error! status: ${response.status}`);
+                  }
+
+                  const result = await response.json();
+                  if (result.success) {
+                      console.log("Server response:", result);
+                      alert("실험 시작합니다.");
+                      window.location.href = `/compound_batch?project_id={{ project_id }}`;
+                  } else {
+                      alert(`Error starting experiment: ${result.error}`);
+                  }
+              } catch (error) {
+                  console.error("Error:", error);
+                  alert(`Error: ${error.message}`);
+              }
+          });
+        });
+
+        function loadProteinFromFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const pdbText = e.target.result;
+                    stage.removeAllComponents();
+                    ligandRepresentations = {};
+
+                    stage.loadFile(new Blob([pdbText], { type: 'text/plain' }), { ext: "pdb" }).then(function (component) {
+                        structureComponent = component;
+                        removeSolventAndWater(component);
+                        component.addRepresentation("cartoon", { colorScheme: "chainindex" });
+                        component.autoView();
+                        identifyLigandsOrResidues(component);
+                    }).catch(function (error) {
+                        console.error("Error loading structure:", error);
+                    });
+                };
+                reader.readAsText(file);
+            } else {
+                alert("Please select a PDB file to upload.");
+            }
+        }
+
+        function removeSolventAndWater(component) {
+            const selection = 'not (water or ion)';
+            component.removeAllRepresentations();
+            component.addRepresentation("cartoon", { colorScheme: "chainindex", sele: selection });
+        }
+
+        function identifyLigandsOrResidues(component) {
+            const structure = component.structure;
+            const ligandSele = new Set();
+            let hasLigands = false;
+
+            structure.eachResidue(residue => {
+                if (residue.isHetero() && !residue.isWater() && !residue.isIon()) {
+                    ligandSele.add(residue.resname);
+                    hasLigands = true;
+                }
+            });
+
+            if (hasLigands) {
+                createLigandTable(component, ligandSele);
+            } else {
+                createResidueTable(component);
+            }
+        }
+
+        function createLigandTable(component, ligandSele) {
+            let ligandTable = "<table><tr><th>Ligand</th><th>Display</th></tr>";
+            let bindingSiteTable = "<table><tr><th>Ligand</th><th>Binding Site</th><th>Display</th></tr>";
+
+            ligandSele.forEach(ligandName => {
+                ligandTable += `<tr><td>${ligandName}</td><td><input type='checkbox' id='ligand_${ligandName}' onchange='toggleLigand("${ligandName}")'></td></tr>`;
+                
+                const repr = component.addRepresentation("ball+stick", {
+                    sele: `(${ligandName}) and not (water or ion)`,
+                    name: ligandName,
+                    visible: false
+                });
+
+                ligandRepresentations[ligandName] = repr;
+
+                const bindingSites = identifyBindingSite(component, ligandName);
+                bindingSites.forEach(site => {
+                    const siteNumber = site.substring(3);
+                    bindingSiteTable += `<tr><td>${ligandName}</td><td>${site}</td><td><input type='checkbox' name='selected_binding_sites' value='${ligandName}:${siteNumber}' id='${ligandName}_${site}' disabled></td></tr>`;
+                });
+            });
+
+            ligandTable += "</table>";
+            bindingSiteTable += "</table>";
+
+            let ligandContainer = document.getElementById("ligand_container")
+            ligandContainer.innerHTML = `
+                <button type="button" class="collapsible">Ligands</button>
+                <div class="content" style="max-height:300px; overflow:auto">${ligandTable}</div>
+                <button type="button" class="collapsible">Binding Sites</button>
+                <div class="content" style="max-height:300px; overflow:auto">${bindingSiteTable}</div>
+            `;
+
+            let tableContainer = document.getElementById("table_container");
+            tableContainer.appendChild(document.getElementById("searchJobBtn"))
+            
+            addCollapsibleFunctionality();
+        }
+
+        function createResidueTable(component) {
+            const structure = component.structure;
+            let residueTable = "<table><tr><th>Residue</th><th>Display</th></tr>";
+
+            structure.eachResidue(residue => {
+                if (!residue.isWater() && !residue.isIon()) {
+                    const residueName = `${residue.resname}${residue.resno}`;
+                    residueTable += `<tr><td>${residueName}</td><td><input type='checkbox' id='residue_${residueName}' onchange='toggleResidue("${residueName}")'></td></tr>`;
+
+                    component.addRepresentation("ball+stick", {
+                        sele: `(${residue.resname} and ${residue.resno}) and not (water or ion)`,
+                        name: residueName,
+                        visible: false
+                    });
+                }
+            });
+
+            residueTable += "</table>";
+            let tableContainer = document.getElementById("table_container");
+            tableContainer.innerHTML = `
+                <button type="button" class="collapsible">Residues</button>
+                <div class="content">${residueTable}</div>
+            `;
+            
+            addCollapsibleFunctionality();
+        }
+
+        function addCollapsibleFunctionality() {
+            var coll = document.getElementsByClassName("collapsible");
+            var i;
+
+            for (i = 0; i < coll.length; i++) {
+                coll[i].addEventListener("click", function(event) {
+                    event.preventDefault();
+                    this.classList.toggle("active");
+                    var content = this.nextElementSibling;
+                    if (content.style.display === "block") {
+                        content.style.display = "none";
+                    } else {
+                        content.style.display = "block";
+                    }
+                });
+            }
+        }
+
+        function identifyBindingSite(component, ligandName) {
+            const structure = component.structure;
+            const bindingSite = new Set();
+
+            structure.eachAtom(atom => {
+                if (!atom.isHetero() && !atom.isWater() && !atom.isIon()) {
+                    structure.eachAtom(ligandAtom => {
+                        if (ligandAtom.resname === ligandName && atom.distanceTo(ligandAtom) < 5) {
+                            bindingSite.add(`${atom.resname}${atom.resno}`);
+                        }
+                    });
+                }
+            });
+
+            return Array.from(bindingSite);
+        }
+
+        function toggleLigand(ligandName) {
+            const repr = ligandRepresentations[ligandName];
+            if (repr) {
+                const isVisible = repr.getVisibility();
+                repr.setVisibility(!isVisible);
+
+                document.querySelectorAll(`[id^='${ligandName}_']`).forEach(checkbox => {
+                    checkbox.disabled = isVisible; 
+                    checkbox.checked = !isVisible;
+                });
+            }
+        }
+
+        function toggleResidue(residueName) {
+            structureComponent.reprList.forEach(repr => {
+                if (repr.name === residueName) {
+                    repr.setVisibility(!repr.getVisibility());
+                }
+            });
+        }
+    </script>
+</body>
+</html>
