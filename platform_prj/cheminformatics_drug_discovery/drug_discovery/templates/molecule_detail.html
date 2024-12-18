@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- <meta name="molecule detail" content="SilicoWorks molecule detail"> -->
+<title>Home - SilicoWorks</title>
+<style scoped>
+  /* :root {
+    --primary-color: #007bff;
+    --background-color: #ffffff;
+    --text-color: #333333;
+    --navbar-height: 4rem;
+  } */
+
+  .tabs-container {
+    /* max-width: 800px; */
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  [role="tablist"] {
+    display: flex;
+    gap: 1rem;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .tab {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 1rem;
+    border-bottom: 2px solid transparent;
+  }
+
+  .tab.active {
+    border-bottom: 2px solid #007bff;
+    color: #007bff;
+  }
+
+  .panel-1, .panel-2 {
+    display: none;
+    padding: 1rem;
+  }
+
+  .panel-1.active {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .panel-2.active {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .panel-2 .tab-card:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+
+  .tab-card {
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+  }
+  .tab-card h2 {
+      color: #333;
+      margin-top: 0;
+  }
+  .tab-card p {
+      color: #666;
+      margin-bottom: 10px;
+  }
+  .table-container {
+      margin-bottom: 4vh;
+  }
+  table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+  }
+  th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+  }
+  th {
+      background-color: #f2f2f2;
+  }
+
+ 
+  @media (max-width: 768px) {
+    .panel-1.active, .panel-2.active {
+      grid-template-columns: 1fr;
+    }
+
+  }
+  .structure-container {
+    width: 100%;
+    padding: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;  /* 최소 높이 설정 */
+}
+
+.molecule-image {
+    max-width: 90%;  /* 약간의 여백을 주기 위해 90%로 설정 */
+    width: auto;
+    height: auto;
+    object-fit: contain;  /* 이미지 비율 유지 */
+    display: block;
+    margin: 0 auto;
+}
+
+/* 화면 크기에 따른 반응형 설정 */
+@media (max-width: 768px) {
+    .structure-container {
+        min-height: 250px;
+        padding: 0.5rem;
+    }
+    
+    .molecule-image {
+        max-width: 95%;
+    }
+}
+
+@media (max-width: 480px) {
+    .structure-container {
+        min-height: 200px;
+    }
+}
+
+/* 카드 스타일 보완 */
+.tab-card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    overflow: hidden;  /* 내부 콘텐츠가 넘치지 않도록 */
+}
+
+.tab-card h2 {
+    margin-bottom: 1rem;
+    color: #333;
+    font-size: 1.25rem;
+}
+
+/* 패널 그리드 조정 */
+.panel-1.active {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    padding: 1rem;
+}
+
+@media (max-width: 768px) {
+    .panel-1.active {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head> 
+<body>
+  <header class="header">
+  </header>
+  <main class="container">
+    <div class="tabs-container">
+      <div role="tablist" aria-label="Content tabs">
+        <button role="tab" 
+                aria-selected="true"
+                aria-controls="panel-1"
+                id="tab-1"
+                class="tab active">
+          Molecule Detail-1
+        </button>
+        <button role="tab" 
+                aria-selected="false"
+                aria-controls="panel-2"
+                id="tab-2"
+                class="tab">
+          Molecule Detail-2
+        </button>
+      </div>
+    
+      <div id="panel-1" 
+           role="tabpanel" 
+           aria-labelledby="tab-1"
+           class="panel-1 active">
+        <div class="tab-card">
+            <h2>화학 구조</h2>
+              {% if molecule_img %}
+                <img src="{{ molecule_img }}" alt="Molecule structure" class="molecule-image">
+              {% else %}
+                  <p class="structure-error">분자 구조를 표시할 수 없습니다.</p>
+              {% endif %}
+        </div>
+        <div class="tab-card">
+            <h2>Basic Information</h2>
+            <!-- <label>compound ID</label>
+            <span>{{ compound_id }}</span> -->
+            <p>compound ID: {{ compound_id }}</p>
+            <p>smiles: {{ smiles }}</p>
+        </div>
+        <div class="tab-card">
+            <h2>Spider Chart</h2>
+            <!-- <p></p> -->
+        </div>
+        <div class="tab-card">
+          <h2>Properties</h2>
+          <p>logP: {{ logP }}</p>
+          <p>molecular weight: {{ molecular_weight }}</p>
+          <p>hydrogen bond acceptors: {{ hydrogen_bond_acceptors }}</p>
+          <p>hydrogen bond donors: {{ hydrogen_bond_donors }}</p>
+          <p>lipinski: {{ lipinski }}</p>
+          <p>qed: {{ qed }}</p>
+          <p>stereo centers: {{ stereo_centers }}</p>
+          <p>tpsa: {{ tpsa }}</p>
+        </div>
+      </div>
+    
+      <div id="panel-2" 
+           role="tabpanel" 
+           aria-labelledby="tab-2"
+           class="panel-2">
+        <div class="tab-card">
+          <h2>ADME</h2>
+          <p>a</p>
+          <p>b</p>
+          <p>c</p>
+        </div>
+        <div class="tab-card">
+          <h2>Toxicity</h2>
+          <p>a</p>
+          <p>b</p>
+          <p>c</p>
+        </div>
+        <div class="tab-card">
+          <h2>Discovery history</h2>
+          <div class="table-container" style="width:100%; height:400px; overflow:auto">
+            <table id="projectTable">
+              <thead>
+                <tr>
+                  <th>Index</th>
+                  <th>Project Name</th>
+                  <th>Target</th>
+                  <th>Job Type</th>
+                  <th>Job ID</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for info in job_project_info %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td><a href="#" onclick="navigateToBatch('{{ info.project_id }}', '{{ info.project_chem_or_pep }}')">{{ info.project_name }}</a></td>
+                  <td>{{ info.target }}</td>
+                  <td>{{ info.job_type }}</td>
+                  <td>{{ info.job_id }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const tabs = document.querySelectorAll('[role="tab"]');
+      const panels = document.querySelectorAll('[role="tabpanel"]');
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', e => {
+          const target = e.target;
+          const panelId = target.getAttribute('aria-controls');
+
+          tabs.forEach(tab => {
+            const selected = tab === target;
+            tab.setAttribute('aria-selected', selected);
+            tab.classList.toggle('active', selected);
+          });
+
+          panels.forEach(panel => {
+            const visible = panel.id === panelId;
+            panel.classList.toggle('active', visible);
+          });
+        });
+
+      });
+    });
+
+    function navigateToBatch(projectId, chemOrPep) {
+      let url;
+      if (chemOrPep === "Chem") {
+        url = `/compound_batch?project_id=${projectId}`;
+      } else if (chemOrPep === "Pep") {
+        url = `/peptide_batch?project_id=${projectId}`;
+      }
+      window.location.href = url;
+    }
+
+
+  </script>
+</body>
+</html>
