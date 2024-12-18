@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assay Start</title>
+    <script src="https://unpkg.com/ngl@2.0.0-dev.37/dist/ngl.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css" rel="stylesheet">
+    <style>
+        #container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 20px;
+        }
+        #nglviewerContainer {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+        #dataContainer {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        #uploadContainer {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            padding: 10px;
+            background-color: #F5F5F5;
+            border-radius: 5px;
+        }
+        #tableContainer {
+            flex: 1;
+            overflow: auto;
+        }
+        #datasetTable {
+            width: 100%;
+            height: 100%;
+        }
+        #btnBox {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 10px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: #007BFF;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #6C757D;
+            color: white;
+        }
+        #messageBox {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background-color: #D4EDDA;
+            color: #155724;
+            border: 1px solid #C3E6CB;
+        }
+        .error {
+            background-color: #F8D7DA;
+            color: #721C24;
+            border: 1px solid #F5C6CB;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="nglviewerContainer"></div>
+        <div id="dataContainer">
+            <div id="uploadContainer">
+                <div class="upload-section">
+                    <label for="fileUpload">파일 업로드:</label>
+                    <input type="file" id="fileUpload" accept=".csv,.xlsx">
+                    <button class="btn btn-secondary" onclick="handleFileUpload()">업로드</button>
+                </div>
+                <div class="divider">또는</div>
+                <div class="manual-section">
+                    <button class="btn btn-secondary" onclick="toggleManualInput()">직접 입력</button>
+                </div>
+            </div>
+            <div id="tableContainer">
+                <div id="datasetTable"></div>
+            </div>
+            <div id="btnBox">
+                <button class="btn btn-secondary" onclick="cancelExperiment()">취소</button>
+                <button class="btn btn-primary" onclick="startExperiment()">실험 시작</button>
+            </div>
+        </div>
+    </div>
+    <div id="messageBox"></div>
+    {% csrf_token %}
+    <script>
+        let stage;
+        let table;
+        let compounds = {{ compounds_data|safe }};
+        // Initialize NGL Viewer
+        document.addEventListener("DOMContentLoaded", function() {
+            stage = new NGL.Stage("nglviewerContainer");
+            stage.setParameters({
+                backgroundColor: "white"
+            });
+            initializeTable();
+        });
+        function initializeTable() {
+            const container = document.getElementById('datasetTable');
+            const data = compounds.map(compound => ({
+                id: compound.id,
+                smiles: compound.smiles,
+                value: ''
+            }));
+            table = new Handsontable(container, {
+                data: data,
+                colHeaders: ['Compound ID', 'SMILES', 'Assay Value'],
+                columns: [
+                    { data: 'id', readOnly: true },
+                    { data: 'smiles', readOnly: true },
+                    { data: 'value' }
+                ],
+                rowHeaders: true,
+                width: '100%',
+                height: '100%',
+                licenseKey: 'non-commercial-and-evaluation'
+            });
+        }
+        function handleFileUpload() {
+            const fileInput = document.getElementById('fileUpload');
+            const file = fileInput.files[0];
+            if (!file) {
+                showMessage('Please select a file first', 'error');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('job_id', '{{ job_id }}');
+            fetch('{% url "create_assay_data" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('File uploaded successfully', 'success');
+                    // Update table with new data
+                    table.loadData(data.compounds);
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('Error uploading file: ' + error, 'error');
+            });
+        }
+        function startExperiment() {
+            const data = table.getData();
+            const experimentData = data.map((row, idx) => ({
+                compound_id: compounds[idx].id,
+                value: row[2],
+                value_type: 'IC50' // 또는 다른 appropriate value type
+            }));
+            const jobId = "{{ job_id|default:'null' }}";
+            if (jobId === 'null') {
+                console.error('No job ID available');
+                return;
+            }
+            fetch('{% url "create_assay_data" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    job_id: jobId,
+                    data: experimentData
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = `{% url 'get_assay_results' %}?job_id={{ job_id }}&project_id={{ project_id }}`;
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('Error starting experiment: ' + error, 'error');
+            });
+        }
+        function showMessage(message, type) {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = message;
+            messageBox.className = type;
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 3000);
+        }
+        function cancelExperiment() {
+            window.history.back();
+        }
+        // 분자 구조 표시 함수
+        function displayMolecule(mol3d) {
+            stage.removeAllComponents();
+            if (mol3d) {
+                stage.loadFile(new Blob([mol3d], {type: 'text/plain'}), {ext: 'mol2'})
+                    .then(function (component) {
+                        component.addRepresentation("ball+stick");
+                        stage.autoView();
+                    });
+            }
+        }
+        // 테이블 row 클릭 이벤트
+        table.addHook('afterSelection', function(row, col) {
+            if (row >= 0 && compounds[row].mol_3d) {
+                displayMolecule(compounds[row].mol_3d);
+            }
+        });
+    </script>
+</body>
+</html>
