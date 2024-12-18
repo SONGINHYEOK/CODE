@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dataset - SilicoWorks</title>
+<style scoped>
+  body, html {
+      height: 100%;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+  }
+  body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      /* margin: 0; */
+      padding: 0;
+  }
+  .header {
+      background-color: #333;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+  }
+  .container {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+  }
+
+  .dataset-container {
+      position: relative;
+      max-width: 800px;
+      margin: auto;
+      /* padding: 20px; */
+  }
+  /* .pipeline-card {
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+      padding: 20px;
+  }
+  .pipeline-card h2 {
+      color: #333;
+      margin-top: 0;
+  }
+  .pipeline-card p {
+      color: #666;
+      margin-bottom: 10px;
+  } */
+  table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+  }
+  th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+  }
+  th {
+      background-color: #f2f2f2;
+  }
+  .footer {
+      background-color: #333;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+  }
+  a {
+      text-decoration: none;
+      color: #007bff;
+  }
+  a:hover {
+      text-decoration: underline;
+  }
+
+  .buttons {
+      display: flex;
+      /* justify-content: space-between; */
+      justify-content: flex-end;
+      gap: 1em;
+      align-items: center;
+      margin-bottom: 0.1em;
+      flex-wrap: wrap;
+  }
+  #addDataBtn, #removeDataBtn {
+      margin-bottom: 0.3em;
+      padding: 0.4em 0.8em;
+      font-size: 0.8em;
+      background-color: #BDBDBD;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      justify-content: flex-end;
+  }
+  #addDataBtn:hover, #removeDataBtn:hover {
+      background-color: #636363;
+  }
+  .table-container {
+      margin-bottom: 4vh;
+  }
+
+  /* modal */
+  dialog {
+      width: 90%;
+      max-width: 500px;
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      background-color: white;
+  }
+  
+  dialog::backdrop {
+      background-color: rgba(0, 0, 0, 0.4);
+  }
+  
+  form {
+      display: flex;
+      flex-direction: column;
+  }
+  
+  form p {
+      margin-bottom: 15px;
+  }
+  
+  label {
+      font-weight: bold;
+  }
+  
+  input[type="text"],
+  select,
+  input[type="range"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+  }
+  
+  fieldset {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+  }
+  
+  legend {
+      font-weight: bold;
+  }
+  
+  /* .buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+  } */
+
+
+</style>
+</head>
+<body>
+  {% csrf_token %}
+  <div class="header">
+    <h1>Dataset</h1>
+  </div>
+  <div class="container">
+    <div class="dataset-container" id="datasetContainer">
+      <div class = "buttons">
+        <button id="addDataBtn">Add Dataset</button>
+        <!-- select에서 하나씩만 삭제가능하도록 -->
+        <button id="removeDataBtn">Remove Dataset</button>
+      </div>
+
+      <!-- modal -->
+      <dialog id="datasetDialog">
+        <form id="datasetForm">
+          {% csrf_token %}
+          <p>
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" placeholder="이름을 입력해주세요." required minlength="1" maxlength="30" size="30" />
+          </p>
+          <p>
+            <label for="description">Description:</label>
+            <input type="text" id="description" name="description" placeholder="설명을 입력해주세요." required minlength="1" maxlength="300" size="30" />
+          </p>
+
+          <div class=buttons>
+            <button type="submit">Submit</button>
+            <button id="cancel" type="reset">Cancel</button>
+          </div>
+        </form>
+      </dialog>
+        
+      <div class="table-container" style="width:100%; height:400px; overflow:auto">
+        <table id="datasetTable">
+          <thead>
+            <tr>
+              <th>Index</th>
+              <th>Name</th>
+              <th>Owner</th>
+              <th>Size</th>
+              <th>Select</th>
+            </tr>
+          </thead>
+          <tbody id="relatedTable">
+            {% for data in dataset %}
+            <tr data-id="{{ data.id }}">
+              <td><a href="#" onclick="navigateToDatasetDetail('{{ data.id }}')">{{ forloop.counter }}</a></td>
+              <td>{{ data.name }}</td>
+              <td>{{ data.owner }}</td>
+              <td>{{ data.count }}</td>
+              <td><input type="radio" name="selected_item"></td>
+              <!-- <td><input type="checkbox" name="selected_item"></td> -->
+            </tr>
+            {% endfor %}
+
+            <!-- <td>1</td>
+            <td>asdf</td>
+            <td>서성욱</td>
+            <td>0</td> -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="footer">
+    <p>&copy; SilicoWorks</p>
+  </div>
+  <script>
+    const modal = document.getElementById("datasetDialog");
+    const addDataBtn = document.getElementById("addDataBtn");
+    const cancelBtn = modal.querySelector("#cancel");
+    const form = document.getElementById("datasetForm");
+
+    function navigateToDatasetDetail(datasetId) {
+      let url;
+      url = `/dataset/detail?dataset_id=${datasetId}`;
+      window.location.href = url;
+    }
+
+    const handleSubmit = (event) => {
+      event.preventDefault();
+
+      const name = document.getElementById("name").value;
+      const description = document.getElementById("description").value;
+
+      if (!name || !description) {
+        alert("빈칸에 입력해주세요.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("name", name);
+      // formData.append("description", description);
+
+      fetch("/dataset/create/", {
+        method: "POST",
+        body: formData,
+        headers: {
+          "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        // console.log(data)
+        if (data.error) {
+          console.error("Error:", data.error);
+        } else {
+          addRow(data);
+          closeModal();
+        }
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        error.text().then(errorMessage => console.error("Error Message:", errorMessage));
+      });
+    };
+
+    const closeModal = () => {
+      modal.close();
+      form.reset();
+    }
+
+    const handleOutsideClick = (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    }
+
+    function addRow(data) {
+      const currentRowCount = document.querySelectorAll('#relatedTable tr').length;
+      const newRow = document.createElement('tr');
+      newRow.setAttribute('data-id', data.id);
+      newRow.innerHTML = `
+        <td><a href="#" onclick="navigateToDatasetDetail('${data.id}')">${currentRowCount + 1}</a></td>
+        <td>${data.name}</td>
+        <td>${data.owner}</td>
+        <td>${data.count || 0}</td>
+        <td><input type="radio" name="selected_item"></td>
+        `;
+        // <td><input type="checkbox" name="selected_item"></td>
+      document.getElementById('relatedTable').appendChild(newRow);
+    }
+
+    addDataBtn.addEventListener("click", () => modal.showModal());
+    form.addEventListener("submit", handleSubmit);
+    cancelBtn.addEventListener("click", closeModal);
+    window.addEventListener("click", handleOutsideClick);
+
+    document.addEventListener("DOMContentLoaded", function () {
+      // const tableBody = document.getElementById("relatedTable");
+
+      // function addRow(data) {
+      //   const currentRowCount = tableBody.getElementsByTagName('tr').length;
+      //   const newRow = document.createElement('tr');
+      //   newRow.innerHTML = `
+      //     <td><a href="#" onclick="navigateToDatasetDetail('${data.id}')">${currentRowCount + 1}</td>
+      //     <td>${data.name}</td>
+      //     <td>${data.owner}</td>
+      //     <td>${data.size}</td>
+      //     <td><input type="checkbox" name="selected_item"></td>
+      //   `;
+      //   newRow.setAttribute('data-id', data.id);
+      //   tableBody.appendChild(newRow);
+      // }
+
+      const removeDataBtn = document.getElementById("removeDataBtn")
+      removeDataBtn.addEventListener("click", async function () {
+        const selectedRow = document.querySelector('input[name="selected_item"]:checked');
+        if (!selectedRow) {
+          alert("삭제할 항목을 선택해주세요.");
+          return;
+        }
+
+        const row = selectedRow.closest('tr');
+        const datasetId = row.getAttribute('data-id');
+
+        try {
+          row.style.opacity = '0.5';
+
+          const response = await fetch(`/dataset/${datasetId}/delete/`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error('삭제 실패');
+          }
+
+          row.style.transition = 'all 0.3s ease';
+          row.style.opacity = '0';
+          row.style.transform = 'translateX(20px)';
+
+          setTimeout(() => {
+            row.remove();
+          }, 300);
+
+        } catch (error) {
+          console.error('삭제 오류:', error);
+          row.style.opacity = '1';
+
+          const errorMessage = document.createElement('div');
+          errorMessage.className = 'error-message';
+          errorMessage.textContent = '삭제 중 오류가 발생했습니다.';
+          errorMessage.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #f44336;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+          `;
+
+          document.body.appendChild(errorMessage);
+          requestAnimationFrame(() => {
+            errorMessage.style.opacity = '1';
+          });
+
+          setTimeout(() => {
+            errorMessage.style.opacity = '0';
+            setTimeout(() => errorMessage.remove(), 300);
+          }, 3000);
+        }
+      });
+    });
+    
+
+  </script>
+</body>
+</html>
