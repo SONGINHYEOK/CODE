@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dataset Detail - SilicoWorks</title>
+<style scoped>
+ body, html {
+     height: 100%;
+     margin: 0;
+     display: flex;
+     flex-direction: column;
+ }
+ body {
+     font-family: Arial, sans-serif;
+     background-color: #f2f2f2;
+     padding: 0;
+ }
+ .header {
+     background-color: #333;
+     color: #fff;
+     padding: 20px;
+     text-align: center;
+ }
+ .container {
+     flex: 1;
+     padding: 20px;
+     overflow-y: auto;
+ }
+
+ .dataset-detail-container {
+     position: relative;
+     max-width: 800px;
+     margin: auto;
+ }
+
+ table {
+     width: 100%;
+     border-collapse: collapse;
+     margin-bottom: 20px;
+ }
+ th, td {
+     border: 1px solid #ddd;
+     padding: 8px;
+     text-align: left;
+ }
+ th {
+     background-color: #f2f2f2;
+ }
+ .footer {
+     background-color: #333;
+     color: #fff;
+     padding: 20px;
+     text-align: center;
+     position: fixed;
+     bottom: 0;
+     width: 100%;
+ }
+ a {
+     text-decoration: none;
+     color: #007bff;
+ }
+ a:hover {
+     text-decoration: underline;
+ }
+
+ .buttons {
+     display: flex;
+     justify-content: flex-end;
+     gap: 1em;
+     align-items: center;
+     margin-bottom: 0.1em;
+     flex-wrap: wrap;
+ }
+ #addBtn, #removeBtn {
+     margin-bottom: 0.3em;
+     padding: 0.4em 0.8em;
+     font-size: 0.8em;
+     background-color: #BDBDBD;
+     color: white;
+     border: none;
+     border-radius: 4px;
+     cursor: pointer;
+     display: flex;
+     justify-content: flex-end;
+ }
+ #addBtn:hover, #removeBtn:hover {
+     background-color: #636363;
+ }
+ .table-container {
+     margin-bottom: 4vh;
+ }
+
+ /* modal */
+ dialog {
+     width: 90%;
+     max-width: 500px;
+     border: none;
+     border-radius: 8px;
+     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+     padding: 20px;
+     background-color: white;
+ }
+ 
+ dialog::backdrop {
+     background-color: rgba(0, 0, 0, 0.4);
+ }
+ 
+ form {
+     display: flex;
+     flex-direction: column;
+ }
+ 
+ form p {
+     margin-bottom: 15px;
+ }
+ 
+ label {
+     font-weight: bold;
+ }
+ 
+ input[type="text"],
+ select,
+ input[type="range"] {
+     width: 100%;
+     padding: 8px;
+     margin-top: 5px;
+     border: 1px solid #ddd;
+     border-radius: 4px;
+     box-sizing: border-box;
+ }
+ 
+ fieldset {
+     border: 1px solid #ddd;
+     border-radius: 4px;
+     padding: 10px;
+ }
+ 
+ legend {
+     font-weight: bold;
+ }
+</style>
+</head>
+<body>
+  <div style="display: none;">
+    <h3>Debug Information:</h3>
+    <p>Dataset Name: {{ dataset.name }}</p>
+    <p>Compound Count: {{ compound_count }}</p>
+    <pre>Raw JSON: {{ dataset_compounds_json|safe }}</pre>
+  </div>
+  <div class="header">
+    <h1>Dataset Detail</h1>
+  </div>
+  <div class="container">
+    <div class="dataset-detail-container" id="datasetDetailContainer">
+      <div class = "buttons">
+        <button id="addBtn">Add</button>
+        <button id="removeBtn">Remove</button>
+      </div>
+
+    <dialog id="datasetDetailDialog">
+      <form id="datasetDetailForm">
+        {% csrf_token %}
+        <div>
+          <input type="file" id="input" />    
+        </div>
+        <div class="buttons">
+          <button type="submit">Submit</button>
+          <button id="cancel" type="reset">Cancel</button>
+        </div>
+      </form>
+    </dialog>
+       
+    <div class="table-container" style="width:100%; height:400px; overflow:auto">
+      <table id="datasetDetailTable">
+        <thead>
+          <tr>
+            <th>Index</th>
+            <th>Molecule</th>
+            <th>Smiles</th>
+            <th>logP</th>
+            <th>Molecule Weight</th>
+            <th>Select</th>
+          </tr>
+        </thead>
+        <tbody id="relatedTable">            
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="footer">
+  <p>&copy; SilicoWorks</p>
+</div>
+
+<script>
+  const modal = document.getElementById("datasetDetailDialog");
+  const addBtn = document.getElementById("addBtn");
+  const cancelBtn = modal.querySelector("#cancel");
+  const form = document.getElementById("datasetDetailForm")
+  const tableBody = document.getElementById("relatedTable");
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+  }
+  
+  const closeModal = () => {
+    modal.close();
+    form.reset();
+  }
+
+  const handleOutsideClick = (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  }
+  
+  addBtn.addEventListener("click", () => modal.showModal());
+  form.addEventListener("submit", handleSubmit);
+  cancelBtn.addEventListener("click", closeModal);
+  window.addEventListener("click", handleOutsideClick);
+
+  document.addEventListener("DOMContentLoaded", function () {
+    try {
+      const datasetCompoundsJson = JSON.parse('{{ dataset_compounds_json|escapejs|safe }}');
+      console.log("Loaded dataset compounds:", datasetCompoundsJson);
+
+      if (!Array.isArray(datasetCompoundsJson)) {
+        throw new Error('데이터가 배열 형식이 아님.');
+      }
+
+      if (datasetCompoundsJson.length === 0) {
+        const emptyRow = document.createElement("tr");
+        emptyRow.innerHTML = '<td colspan="6" style="text-align: center;">No dataset_compounds available</td>';
+        tableBody.appendChild(emptyRow);
+        return;
+      }
+
+      datasetCompoundsJson.forEach((data, index) => {
+        const newRow = document.createElement("tr");
+        newRow.setAttribute('data-id', data.dataset_compound_id);
+
+        const moleculeDetailUrl = data.job_compound_id && data.result_compound_id ? 
+          `/molecule_detail?job_compound_id=${data.job_compound_id}&result_compound_id=${data.result_compound_id}` : 
+          null;
+
+        newRow.innerHTML = `
+          <td>
+            ${moleculeDetailUrl ? 
+              `<a href="${moleculeDetailUrl}">${index + 1}</a>` : 
+              index + 1
+            }
+          </td>
+          <td>화합물 사진</td>
+          <td>${data.smiles || 'N/A'}</td>            
+          <td>${data.logP !== null ? Number(data.logP) : 'N/A'}</td>
+          <td>${data.molecular_weight !== null ? Number(data.molecular_weight) : 'N/A'}</td>
+          <td><input type="checkbox" name="selected_items"></td>
+        `;
+        tableBody.appendChild(newRow);
+      });
+    } catch (error) {
+      console.error("데이터 처리 중 에러 발생:", error);
+      const errorRow = document.createElement("tr");
+      errorRow.innerHTML = '<td colspan="6" style="text-align: center; color: red;">Error loading data</td>';
+      tableBody.appendChild(errorRow);
+    }
+
+    const removeBtn = document.getElementById("removeBtn")
+    removeBtn.addEventListener("click", async function () {
+      const selectedCheckboxes = document.querySelectorAll('input[name="selected_items"]:checked');
+
+      if (selectedCheckboxes.length === 0) {
+        alert("삭제할 항목을 선택해주세요.")
+        return;
+      }
+
+      const confirmDelete = confirm(`선택한 ${selectedCheckboxes.length}개의 항목을 삭제하시겠습니까?`);
+      if (!confirmDelete) return;
+
+      const deletePromises = Array.from(selectedCheckboxes).map(checkbox => {
+        const row = checkbox.closest('tr');
+        const datasetCompoundId = row.getAttribute('data-id');
+
+        return fetch(`/dataset/compound/${datasetCompoundId}/delete/`, {
+          method: 'DELETE',
+          headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+          }
+        }).then(async response => {
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error - status: ${response.status}`);
+          }
+          return response.json();
+        });
+      });
+
+      try {
+        await Promise.all(deletePromises);
+
+        selectedCheckboxes.forEach(checkbox => {
+          const row = checkbox.closest('tr');
+          row.remove();
+        });
+
+        const remainingRows = document.querySelectorAll('#relatedTable tr');
+        remainingRows.forEach((row, index) => {
+          const indexCell = row.cells[0];
+          if (indexCell) {
+            indexCell.textContent = index + 1;
+          }
+        });
+
+        alert('선택한 항목들이 삭제되었습니다.');
+      } catch (error) {
+        console.error('삭제 실패:', error);
+        alert(`삭제 중 오류가 발생했습니다: ${error.message}`);
+      }
+    });
+
+    const selectedFile = document.getElementById("input").files[0];
+  });
+</script>
+</body>
+</html>
