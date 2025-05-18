@@ -1,0 +1,404 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key id="d1" for="node" attr.name="name" attr.type="string"/>
+<key id="d0" for="node" attr.name="type" attr.type="string"/>
+<graph edgedefault="undirected"><node id="D00001">
+  <data key="d0">drug</data>
+  <data key="d1">Water (JP18/USP);</data>
+</node>
+<node id="D00002">
+  <data key="d0">drug</data>
+  <data key="d1">Nadide (JAN/USAN/INN);</data>
+</node>
+<node id="D00003">
+  <data key="d0">drug</data>
+  <data key="d1">Oxygen (JP18/USP)</data>
+</node>
+<node id="D00004">
+  <data key="d0">drug</data>
+  <data key="d1">Carbon dioxide (JP18/USP);</data>
+</node>
+<node id="D00005">
+  <data key="d0">drug</data>
+  <data key="d1">Flavin adenine dinucleotide (JAN);</data>
+</node>
+<node id="D00006">
+  <data key="d0">drug</data>
+  <data key="d1">Pyridoxal phosphate hydrate (JP18);</data>
+</node>
+<node id="D00007">
+  <data key="d0">drug</data>
+  <data key="d1">Glutamic acid (USP);</data>
+</node>
+<node id="D00008">
+  <data key="d0">drug</data>
+  <data key="d1">Hydrogen peroxide (USP);</data>
+</node>
+<node id="D00009">
+  <data key="d0">drug</data>
+  <data key="d1">Glucose (JP18);</data>
+</node>
+<node id="D00010">
+  <data key="d0">drug</data>
+  <data key="d1">Acetic acid, glacial (USP);</data>
+</node>
+<node id="D00011">
+  <data key="d0">drug</data>
+  <data key="d1">Glycine (JP18/USP)</data>
+</node>
+<node id="D00012">
+  <data key="d0">drug</data>
+  <data key="d1">Alanine (USP);</data>
+</node>
+<node id="D00013">
+  <data key="d0">drug</data>
+  <data key="d1">Aspartic acid (USP/INN);</data>
+</node>
+<node id="D00014">
+  <data key="d0">drug</data>
+  <data key="d1">Glutathione (JP18);</data>
+</node>
+<node id="D00015">
+  <data key="d0">drug</data>
+  <data key="d1">Glutamine (USP);</data>
+</node>
+<node id="D00016">
+  <data key="d0">drug</data>
+  <data key="d1">Serine (USP);</data>
+</node>
+<node id="D00017">
+  <data key="d0">drug</data>
+  <data key="d1">Formaldehyde (USP);</data>
+</node>
+<node id="D00018">
+  <data key="d0">drug</data>
+  <data key="d1">Ascorbic acid (JP18/USP/INN);</data>
+</node>
+<node id="D00019">
+  <data key="d0">drug</data>
+  <data key="d1">Methionine (USP);</data>
+</node>
+<node id="D00020">
+  <data key="d0">drug</data>
+  <data key="d1">Tryptophan (USP/INN);</data>
+</node>
+<node id="D00021">
+  <data key="d0">drug</data>
+  <data key="d1">Phenylalanine (USP/INN);</data>
+</node>
+<node id="D00022">
+  <data key="d0">drug</data>
+  <data key="d1">Tyrosine (USP/INN);</data>
+</node>
+<node id="D00023">
+  <data key="d0">drug</data>
+  <data key="d1">Urea (JP18/USP);</data>
+</node>
+<node id="D00024">
+  <data key="d0">drug</data>
+  <data key="d1">Sulfur, precipitated (USP);</data>
+</node>
+<node id="D00025">
+  <data key="d0">drug</data>
+  <data key="d1">Sucrose (JP18/NF);</data>
+</node>
+<node id="D00026">
+  <data key="d0">drug</data>
+  <data key="d1">L-Cysteine (JP18);</data>
+</node>
+<node id="D00027">
+  <data key="d0">drug</data>
+  <data key="d1">Uracil (JAN/USAN)</data>
+</node>
+<node id="D00028">
+  <data key="d0">drug</data>
+  <data key="d1">Glycerin (JP18/USP);</data>
+</node>
+<node id="D00029">
+  <data key="d0">drug</data>
+  <data key="d1">Biotin (JP18/USP/INN);</data>
+</node>
+<node id="D00030">
+  <data key="d0">drug</data>
+  <data key="d1">Leucine (USP);</data>
+</node>
+<node id="D00031">
+  <data key="d0">drug</data>
+  <data key="d1">Oxiglutatione (JAN/INN);</data>
+</node>
+<node id="D00032">
+  <data key="d0">drug</data>
+  <data key="d1">Histidine (USP/INN);</data>
+</node>
+<node id="D00033">
+  <data key="d0">drug</data>
+  <data key="d1">Phenol (JP18/USP);</data>
+</node>
+<node id="D00034">
+  <data key="d0">drug</data>
+  <data key="d1">Adenine (JAN/USP);</data>
+</node>
+<node id="D00035">
+  <data key="d0">drug</data>
+  <data key="d1">Proline (USP);</data>
+</node>
+<node id="D00036">
+  <data key="d0">drug</data>
+  <data key="d1">Niacinamide (USP);</data>
+</node>
+<node id="D00037">
+  <data key="d0">drug</data>
+  <data key="d1">Citric acid, anhydrous (USP);</data>
+</node>
+<node id="D00038">
+  <data key="d0">drug</data>
+  <data key="d1">Benzoic acid (JP18/USP);</data>
+</node>
+<node id="D00039">
+  <data key="d0">drug</data>
+  <data key="d1">Valine (USP);</data>
+</node>
+<node id="D00040">
+  <data key="d0">drug</data>
+  <data key="d1">Cholesterol (JP18/NF);</data>
+</node>
+<node id="D00041">
+  <data key="d0">drug</data>
+  <data key="d1">Threonine (USP);</data>
+</node>
+<node id="D00042">
+  <data key="d0">drug</data>
+  <data key="d1">Cobamamide (JAN/INN);</data>
+</node>
+<node id="D00043">
+  <data key="d0">drug</data>
+  <data key="d1">Isoflurophate;</data>
+</node>
+<node id="D00044">
+  <data key="d0">drug</data>
+  <data key="d1">Maltose (NF);</data>
+</node>
+<node id="D00045">
+  <data key="d0">drug</data>
+  <data key="d1">Adenosine (JAN/USP);</data>
+</node>
+<node id="D00046">
+  <data key="d0">drug</data>
+  <data key="d1">Anhydrous lactose (JP18);</data>
+</node>
+<node id="D00047">
+  <data key="d0">drug</data>
+  <data key="d1">Taurine (JP18/USP/INN);</data>
+</node>
+<node id="D00048">
+  <data key="d0">drug</data>
+  <data key="d1">Thioctic acid amide (JAN);</data>
+</node>
+<node id="D00049">
+  <data key="d0">drug</data>
+  <data key="d1">Niacin (USP);</data>
+</node>
+<node id="D00050">
+  <data key="d0">drug</data>
+  <data key="d1">Riboflavin (JP18/USP/INN);</data>
+</node>
+<node id="D00051">
+  <data key="d0">drug</data>
+  <data key="d1">Androstenedione (JAN)</data>
+</node>
+<node id="D00052">
+  <data key="d0">drug</data>
+  <data key="d1">Edetic acid (NF/INN);</data>
+</node>
+<node id="D00054">
+  <data key="d0">drug</data>
+  <data key="d1">Inosine (JAN/INN);</data>
+</node>
+<node id="D00055">
+  <data key="d0">drug</data>
+  <data key="d1">Orotic acid (JAN)</data>
+</node>
+<node id="D00056">
+  <data key="d0">drug</data>
+  <data key="d1">Trypsin, crystallized (USP);</data>
+</node>
+<node id="D00057">
+  <data key="d0">drug</data>
+  <data key="d1">Citicoline (JP18/INN);</data>
+</node>
+<node id="D00058">
+  <data key="d0">drug</data>
+  <data key="d1">gamma-Aminobutyric acid (JAN);</data>
+</node>
+<node id="D00059">
+  <data key="d0">drug</data>
+  <data key="d1">Levodopa (JP18/USP/INN);</data>
+</node>
+<node id="D00060">
+  <data key="d0">drug</data>
+  <data key="d1">Dextran 1 (USP);</data>
+</node>
+<node id="D00061">
+  <data key="d0">drug</data>
+  <data key="d1">Xylitol (JP18/NF);</data>
+</node>
+<node id="D00062">
+  <data key="d0">drug</data>
+  <data key="d1">Mannitol (USP);</data>
+</node>
+<node id="D00063">
+  <data key="d0">drug</data>
+  <data key="d1">Tobramycin (JP18/USP);</data>
+</node>
+<node id="D00064">
+  <data key="d0">drug</data>
+  <data key="d1">l-Menthol (JP18);</data>
+</node>
+<node id="D00065">
+  <data key="d0">drug</data>
+  <data key="d1">Isoleucine (USP);</data>
+</node>
+<node id="D00066">
+  <data key="d0">drug</data>
+  <data key="d1">Progesterone (JP18/USP/INN);</data>
+</node>
+<node id="D00067">
+  <data key="d0">drug</data>
+  <data key="d1">Estrone (JAN/USP/INN);</data>
+</node>
+<node id="D00068">
+  <data key="d0">drug</data>
+  <data key="d1">Alcohol (USP);</data>
+</node>
+<node id="D00069">
+  <data key="d0">drug</data>
+  <data key="d1">Vitamin A oil (JP18);</data>
+</node>
+<node id="D00070">
+  <data key="d0">drug</data>
+  <data key="d1">Folic acid (JP18/USP/INN);</data>
+</node>
+<node id="D00071">
+  <data key="d0">drug</data>
+  <data key="d1">Fibronectin (human plasma) (JAN)</data>
+</node>
+<node id="D00072">
+  <data key="d0">drug</data>
+  <data key="d1">Cytochrome c (JAN);</data>
+</node>
+<node id="D00073">
+  <data key="d0">drug</data>
+  <data key="d1">Hydroquinone (USP);</data>
+</node>
+<node id="D00074">
+  <data key="d0">drug</data>
+  <data key="d1">Nitric oxide (JAN/USAN);</data>
+</node>
+<node id="D00075">
+  <data key="d0">drug</data>
+  <data key="d1">Testosterone (JAN/USP);</data>
+</node>
+<node id="D00076">
+  <data key="d0">drug</data>
+  <data key="d1">Noradrenaline (JP18);</data>
+</node>
+<node id="D00077">
+  <data key="d0">drug</data>
+  <data key="d1">Benzyl alcohol (JP18/NF/INN);</data>
+</node>
+<node id="D00078">
+  <data key="d0">drug</data>
+  <data key="d1">Propylene glycol (JP18/USP);</data>
+</node>
+<node id="D00079">
+  <data key="d0">drug</data>
+  <data key="d1">Dinoprostone (JAN/USP/INN);</data>
+</node>
+<node id="D00080">
+  <data key="d0">drug</data>
+  <data key="d1">Chondroitin sulfate A (JAN)</data>
+</node>
+<node id="D00081">
+  <data key="d0">drug</data>
+  <data key="d1">Dinoprost (JP18/USAN/INN);</data>
+</node>
+<node id="D00082">
+  <data key="d0">drug</data>
+  <data key="d1">Pyridoxamine phosphate (JAN);</data>
+</node>
+<node id="D00083">
+  <data key="d0">drug</data>
+  <data key="d1">Nitrogen (JP18/NF);</data>
+</node>
+<node id="D00084">
+  <data key="d0">drug</data>
+  <data key="d1">Dextrin (JP18/NF)</data>
+</node>
+<node id="D00085">
+  <data key="d0">drug</data>
+  <data key="d1">Insulin (JAN/USP)</data>
+</node>
+<node id="D00086">
+  <data key="d0">drug</data>
+  <data key="d1">Thioctic acid (JAN);</data>
+</node>
+<node id="D00087">
+  <data key="d0">drug</data>
+  <data key="d1">Ubenimex (JP18/INN);</data>
+</node>
+<node id="D00088">
+  <data key="d0">drug</data>
+  <data key="d1">Hydrocortisone (JP18/USP/INN);</data>
+</node>
+<node id="D00089">
+  <data key="d0">drug</data>
+  <data key="d1">Oxytocin (JP18/USP/INN);</data>
+</node>
+<node id="D00090">
+  <data key="d0">drug</data>
+  <data key="d1">Thrombin (JP18/USP/INN);</data>
+</node>
+<node id="D00091">
+  <data key="d0">drug</data>
+  <data key="d1">Vanillin (NF)</data>
+</node>
+<node id="D00092">
+  <data key="d0">drug</data>
+  <data key="d1">Coptis rhizome (JP18);</data>
+</node>
+<node id="D00093">
+  <data key="d0">drug</data>
+  <data key="d1">Microcrystalline cellulose (JP18);</data>
+</node>
+<node id="D00094">
+  <data key="d0">drug</data>
+  <data key="d1">Tretinoin (JAN/USP/INN);</data>
+</node>
+<node id="D00095">
+  <data key="d0">drug</data>
+  <data key="d1">Epinephrine (USP/INN);</data>
+</node>
+<node id="D00096">
+  <data key="d0">drug</data>
+  <data key="d1">Sorbitol solution (USP);</data>
+</node>
+<node id="D00097">
+  <data key="d0">drug</data>
+  <data key="d1">Salicylic acid (JP18/USP);</data>
+</node>
+<node id="D00098">
+  <data key="d0">drug</data>
+  <data key="d1">Camphor (USP);</data>
+</node>
+<node id="D00099">
+  <data key="d0">drug</data>
+  <data key="d1">Cetanol (JP18);</data>
+</node>
+<node id="D00100">
+  <data key="d0">drug</data>
+  <data key="d1">Menatetrenone (JP18/INN);</data>
+</node>
+<node id="D00101">
+  <data key="d0">drug</data>
+  <data key="d1">Vasopressin (JP18/USP);</data>
+</node>
+</graph></graphml>
